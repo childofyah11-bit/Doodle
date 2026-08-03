@@ -48,7 +48,7 @@
       <div class="controls">
         <label class="small" title="Image opacity for tracing">
           Opacity
-          <input id="opacity" type="range" min="0" max="1" step="0.05" value="0.6">
+          <input id="opacity" type="range" min="0" max="10" step="0.1" value="1">
         </label>
         <label class="small" title="Screen brightness for pencil tracing">
           Brightness
@@ -138,9 +138,10 @@
       resizeCanvases(w, h);
       // draw background image
       bgCtx.clearRect(0,0,bg.width,bg.height);
-      bgCtx.globalAlpha = parseFloat(opacityInput.value);
+      // Use canvas filter brightness to allow values > 1 (globalAlpha is clamped to 0..1)
+      bgCtx.filter = `brightness(${parseFloat(opacityInput.value)})`;
       bgCtx.drawImage(image, 0, 0, bg.width, bg.height);
-      bgCtx.globalAlpha = 1;
+      bgCtx.filter = 'none';
       // clear overlay
       ctx.clearRect(0,0,overlay.width,overlay.height);
     }
@@ -156,13 +157,13 @@
       if (file && file.type.startsWith('image/')) handleImageFile(file);
     });
 
-    // Opacity control
+    // Opacity control (now controls a brightness/intensity multiplier so it can go >1)
     opacityInput.addEventListener('input', () => {
       if (!img) return;
       bgCtx.clearRect(0,0,bg.width,bg.height);
-      bgCtx.globalAlpha = parseFloat(opacityInput.value);
+      bgCtx.filter = `brightness(${parseFloat(opacityInput.value)})`;
       bgCtx.drawImage(img, 0, 0, bg.width, bg.height);
-      bgCtx.globalAlpha = 1;
+      bgCtx.filter = 'none';
     });
 
     // Brightness control
