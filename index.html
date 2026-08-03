@@ -17,6 +17,8 @@
       position:relative;flex:1;display:flex;align-items:center;justify-content:center;
       background:linear-gradient(45deg,#eee,#fff);
       touch-action: none; /* helps to disable default touch gestures on the wrapper */
+      filter: brightness(1);
+      transition: filter 0.1s ease;
     }
     canvas {
       max-width:100%;max-height:100%;width:auto;height:auto;display:block;
@@ -48,6 +50,10 @@
           Opacity
           <input id="opacity" type="range" min="0" max="1" step="0.05" value="0.6">
         </label>
+        <label class="small" title="Screen brightness for pencil tracing">
+          Brightness
+          <input id="brightness" type="range" min="0.5" max="3" step="0.1" value="1">
+        </label>
         <button id="clearBtn" class="secondary">Clear</button>
         <button id="lockBtn">Lock Touch: Off</button>
       </div>
@@ -60,7 +66,7 @@
     </div>
 
     <footer>
-      Use pointer (mouse/finger/stylus) to trace on the overlay. "Lock Touch" disables pinch/zoom/scroll while active.
+      Use pencil on paper over screen to trace. Touch only. "Lock Touch" disables pinch/zoom/scroll while active.
     </footer>
   </div>
 
@@ -70,6 +76,7 @@
     const overlay = document.getElementById('overlay');
     const wrap = document.getElementById('canvasWrap');
     const opacityInput = document.getElementById('opacity');
+    const brightnessInput = document.getElementById('brightness');
     const clearBtn = document.getElementById('clearBtn');
     const lockBtn = document.getElementById('lockBtn');
 
@@ -153,7 +160,12 @@
       bgCtx.globalAlpha = 1;
     });
 
-    // Drawing via pointer events
+    // Brightness control
+    brightnessInput.addEventListener('input', () => {
+      wrap.style.filter = `brightness(${brightnessInput.value})`;
+    });
+
+    // Drawing via touch events only
     overlay.style.touchAction = 'none'; // prevent built-in gestures on overlay
     function getPosFromEvent(e) {
       const rect = overlay.getBoundingClientRect();
@@ -164,6 +176,11 @@
     }
 
     function pointerDown(e) {
+      // Only allow touch input (e.touches means touch event)
+      if (e.touches === undefined || e.touches.length === 0) {
+        // This is a mouse event, don't draw
+        return;
+      }
       isDrawing = true;
       overlay.setPointerCapture && overlay.setPointerCapture(e.pointerId);
       last = getPosFromEvent(e);
@@ -190,19 +207,10 @@
       e.preventDefault && e.preventDefault();
     }
 
-    // Use pointer events when available, otherwise fallback to touch/mouse
-    if (window.PointerEvent) {
-      overlay.addEventListener('pointerdown', pointerDown);
-      overlay.addEventListener('pointermove', pointerMove);
-      window.addEventListener('pointerup', pointerUp);
-    } else {
-      overlay.addEventListener('touchstart', e => { pointerDown(e); }, {passive:false});
-      overlay.addEventListener('touchmove', e => { pointerMove(e); }, {passive:false});
-      window.addEventListener('touchend', e => { pointerUp(e); }, {passive:false});
-      overlay.addEventListener('mousedown', pointerDown);
-      overlay.addEventListener('mousemove', pointerMove);
-      window.addEventListener('mouseup', pointerUp);
-    }
+    // Use touch events only (disabled mouse drawing)
+    overlay.addEventListener('touchstart', e => { pointerDown(e); }, {passive:false});
+    overlay.addEventListener('touchmove', e => { pointerMove(e); }, {passive:false});
+    window.addEventListener('touchend', e => { pointerUp(e); }, {passive:false});
 
     clearBtn.addEventListener('click', () => {
       ctx.clearRect(0,0,overlay.width,overlay.height);
