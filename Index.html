@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <!-- Viewport: prevent zoom while locked (note: user-scalable is deprecated in some browsers) -->
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Tracing Canvas (drag & trace)</title>
+  <style>
+    html,body{height:100%;margin:0;font-family:system-ui,Segoe UI,Roboto,Arial}
+    .app {
+      display:flex;flex-direction:column;height:100vh;
+    }
+    header {
+      padding:8px;background:#111;color:#fff;display:flex;gap:8px;align-items:center;
+    }
+    #canvasWrap {
+      position:relative;flex:1;display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(45deg,#eee,#fff);
+      touch-action: none; /* helps to disable default touch gestures on the wrapper */
+    }
+    canvas {
+      max-width:100%;max-height:100%;width:auto;height:auto;display:block;
+      background: transparent;
+      box-shadow:0 8px 30px rgba(0,0,0,0.15);
+      border-radius:6px;
+      -webkit-user-select:none;user-select:none;
+    }
+    .controls {display:flex;gap:8px;align-items:center}
+    .dropHint {color:#f0f0f0;opacity:.9;font-size:14px}
+    input[type="range"] {width:120px}
+    button {padding:6px 10px;border-radius:4px;border:none;background:#2b6bf6;color:white}
+    button.secondary {background:#eee;color:#111}
+    label {display:flex;gap:6px;align-items:center;color:#fff}
+    .small {font-size:13px;color:#ddd}
+    footer {padding:8px;background:#fafafa;border-top:1px solid #eee;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div style="font-weight:600">Tracing Canvas</div>
+      <div class="controls" style="margin-left:8px">
+        <label class="dropHint">Drag & drop an image onto the canvas</label>
+      </div>
+      <div style="flex:1"></div>
+      <div class="controls">
+        <label class="small" title="Image opacity for tracing">
+          Opacity
+          <input id="opacity" type="range" min="0" max="1" step="0.05" value="0.6">
+        </label>
+        <button id="clearBtn" class="secondary">Clear</button>
+        <button id="lockBtn">Lock Touch: Off</button>
+      </div>
+    </header>
+
+    <div id="canvasWrap" aria-label="Tracing area">
+      <!-- two canvases: background image and overlay for drawing -->
+      <canvas id="bg"></canvas>
+      <canvas id="overlay"></canvas>
+    </div>
+
+    <footer>
+      Use pointer (mouse/finger/stylus) to trace on the overlay. "Lock Touch" disables pinch/zoom/scroll while active.
+    </footer>
+  </div>
+
+  <script>
+  (function(){
+    const bg = document.getElementById('bg');
+    const overlay = document.getElementById('overlay');
+    const wrap = document.getElementById('canvasWrap');
+    const opacityInput = document.getElementById('opacity');
+    const clearBtn = document.getElementById('clearBtn');
+    const lockBtn = document.getElementById('lockBtn');
+
+    const bgCtx = bg.getContext('2d', { alpha: true });
+    const ctx = overlay.getContext('2d', { alpha: true });
+
+    let img = null;
+    let isDrawing = false;
+    let last = {x:0,y:0};
+    let locked = false;
+
+    // Resize canvases to fit available space while preserving image aspect when set
+    function resizeCanvases(width, height) {
+      // If width/height provided, set canvas size to that; otherwise fill container
+      let containerW = wrap.clientWidth * 0.95;
+      let containerH = wrap.clientHeight * 0.95;
+      // pick size preserving aspect ratio when image present
+      let w = width || containerW;
+      let h = height || containerH;
+      bg.style.width = bg.width = w;
+      bg.style.height = bg.height = h;
+      overlay.style.width = overlay.width = w;
+      overlay.style.height = overlay.height = h;
+      overlay.style.position = 'absolute';
+      bg.style.position = 'absolute';
+      centerCanvases();
+    }
+    function centerCanvases(){
+      // center by letting them be positioned absolute centered by flexbox wrapper
+      // nothing required here since wrapper centers children
+    }
+
+    // Load dropped image file
+    function handleImageFile(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const i = new Image();
+        i.onload = () => {
+          img = i;
+          fitImageToCanvas(i);
+        };
+        i.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function fitImageToCanvas(image) {
+      // Choose canvas size to fit viewport but keep image aspect
+      const maxW = Math.min(window.innerWidth - 40, image.width);
+      const maxH = Math.min(window.innerHeight - 120, image.height);
+      let ratio = Math.min(maxW / image.width, maxH / image.height, 1);
+      const w = Math.round(image.width * ratio);
+      const h = Math.round(image.height * ratio);
+      resizeCanvases(w, h);
+      // draw background image
+      bgCtx.clearRect(0,0,bg.width,bg.height);
+      bgCtx.globalAlpha = parseFloat(opacityInput.value);
+      bgCtx.drawImage(image, 0, 0, bg.width, bg.height);
+      bgCtx.globalAlpha = 1;
+      // clear overlay
+      ctx.clearRect(0,0,overlay.width,overlay.height);
+    }
+
+    // Drag & drop handlers
+    wrap.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    });
+    wrap.addEventListener('drop', e => {
+      e.preventDefault();
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) handleImageFile(file);
+    });
+
+    // Opacity control
+    opacityInput.addEventListener('input', () => {
+      if (!img) return;
+      bgCtx.clearRect(0,0,bg.width,bg.height);
+      bgCtx.globalAlpha = parseFloat(opacityInput.value);
+      bgCtx.drawImage(img, 0, 0, bg.width, bg.height);
+      bgCtx.globalAlpha = 1;
+    });
+
+    // Drawing via pointer events
+    overlay.style.touchAction = 'none'; // prevent built-in gestures on overlay
+    function getPosFromEvent(e) {
+      const rect = overlay.getBoundingClientRect();
+      let clientX, clientY;
+      if (e.touches && e.touches[0]) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+      else { clientX = e.clientX; clientY = e.clientY; }
+      return { x: (clientX - rect.left) * (overlay.width / rect.width), y: (clientY - rect.top) * (overlay.height / rect.height) };
+    }
+
+    function pointerDown(e) {
+      isDrawing = true;
+      overlay.setPointerCapture && overlay.setPointerCapture(e.pointerId);
+      last = getPosFromEvent(e);
+      ctx.lineJoin = ctx.lineCap = 'round';
+      ctx.lineWidth = Math.max(2, Math.min(10, overlay.width * 0.005));
+      ctx.strokeStyle = '#000';
+      ctx.beginPath();
+      ctx.moveTo(last.x, last.y);
+      e.preventDefault && e.preventDefault();
+    }
+    function pointerMove(e) {
+      if (!isDrawing) return;
+      const p = getPosFromEvent(e);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      last = p;
+      e.preventDefault && e.preventDefault();
+    }
+    function pointerUp(e) {
+      if (!isDrawing) return;
+      isDrawing = false;
+      ctx.closePath();
+      overlay.releasePointerCapture && overlay.releasePointerCapture(e.pointerId);
+      e.preventDefault && e.preventDefault();
+    }
+
+    // Use pointer events when available, otherwise fallback to touch/mouse
+    if (window.PointerEvent) {
+      overlay.addEventListener('pointerdown', pointerDown);
+      overlay.addEventListener('pointermove', pointerMove);
+      window.addEventListener('pointerup', pointerUp);
+    } else {
+      overlay.addEventListener('touchstart', e => { pointerDown(e); }, {passive:false});
+      overlay.addEventListener('touchmove', e => { pointerMove(e); }, {passive:false});
+      window.addEventListener('touchend', e => { pointerUp(e); }, {passive:false});
+      overlay.addEventListener('mousedown', pointerDown);
+      overlay.addEventListener('mousemove', pointerMove);
+      window.addEventListener('mouseup', pointerUp);
+    }
+
+    clearBtn.addEventListener('click', () => {
+      ctx.clearRect(0,0,overlay.width,overlay.height);
+    });
+
+    // Toggle lock: prevent scrolling/zooming while active
+    function setLocked(v) {
+      locked = !!v;
+      lockBtn.textContent = `Lock Touch: ${locked ? 'On' : 'Off'}`;
+      if (locked) {
+        // Prevent touchmove default (pinch/scroll). Must register with passive:false
+        document.addEventListener('touchmove', preventDefaultTouch, {passive:false});
+        document.addEventListener('touchstart', preventDoubleTouchZoom, {passive:false});
+        // Safari/old iOS: gesturestart
+        document.addEventListener('gesturestart', preventDefaultTouch);
+        // Optionally lock scroll on body
+        document.body.style.overflow = 'hidden';
+        // apply touch-action none on document element to help other browsers
+        document.documentElement.style.touchAction = 'none';
+      } else {
+        document.removeEventListener('touchmove', preventDefaultTouch, {passive:false});
+        document.removeEventListener('touchstart', preventDoubleTouchZoom, {passive:false});
+        document.removeEventListener('gesturestart', preventDefaultTouch);
+        document.body.style.overflow = '';
+        document.documentElement.style.touchAction = '';
+      }
+    }
+
+    function preventDefaultTouch(e) {
+      // allow drawing touches on overlay only; otherwise prevent default actions
+      // if event target is overlay or its children, allow to proceed (we still call preventDefault in drawing handlers)
+      if (e.target === overlay || overlay.contains(e.target)) {
+        // allow overlay pointer handlers to draw; do not call preventDefault here
+        return;
+      }
+      e.preventDefault();
+    }
+
+    // Prevent double-tap zoom by preventing default on touchstart when within quick taps
+    let lastTap = 0;
+    function preventDoubleTouchZoom(e) {
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        e.preventDefault();
+      }
+      lastTap = now;
+    }
+
+    lockBtn.addEventListener('click', () => setLocked(!locked));
+
+    // Make canvases fill but maintain center when window resizes
+    window.addEventListener('resize', () => {
+      if (img) fitImageToCanvas(img);
+      else resizeCanvases(Math.min(window.innerWidth - 40, 800), Math.min(window.innerHeight - 120, 600));
+    });
+
+    // init
+    resizeCanvases(Math.min(window.innerWidth - 40, 800), Math.min(window.innerHeight - 120, 600));
+
+    // Optional: support loading an initial image via click
+    wrap.addEventListener('click', () => {
+      // if no image, open file selector
+      if (!img) {
+        const f = document.createElement('input');
+        f.type = 'file';
+        f.accept = 'image/*';
+        f.onchange = (e) => {
+          if (f.files && f.files[0]) handleImageFile(f.files[0]);
+        };
+        f.click();
+      }
+    });
+
+    // Accessibility hint: when locked, ensure overlay is focusable for pointer input
+    overlay.tabIndex = 0;
+  })();
+  </script>
+</body>
+</html>
