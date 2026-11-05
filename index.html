@@ -6,195 +6,107 @@
   <meta name="theme-color" content="#101827" />
   <title>Tracing Canvas</title>
   <style>
-    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#172033;background:#eef2f8;font-synthesis:none;text-rendering:optimizeLegibility}
-    *{box-sizing:border-box}html,body{height:100%;margin:0}body{overflow:hidden}.app{height:100%;height:100dvh;display:flex;flex-direction:column}
-    header{z-index:2;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 14px;background:#101827;color:#fff;box-shadow:0 5px 20px #1113}
-    .brand{font-weight:750;font-size:1.05rem;white-space:nowrap}.hint{font-size:.82rem;color:#c5d0e0}.toolbar{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .group{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 9px;border:1px solid #ffffff20;border-radius:12px;background:#ffffff0b}
-    label{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:#edf2fa;white-space:nowrap}input[type=range]{width:90px;accent-color:#72a2ff}input[type=checkbox]{accent-color:#4b83f5}
-    button{min-height:38px;padding:8px 11px;border:0;border-radius:9px;background:#3978f6;color:#fff;font:inherit;font-weight:650;cursor:pointer;touch-action:manipulation}
-    button:hover{filter:brightness(1.08)}button:focus-visible,input:focus-visible{outline:3px solid #ffc857;outline-offset:2px}button.secondary{background:#e8edf5;color:#182235}button.active{background:#f3b73f;color:#172033}button:disabled{opacity:.55;cursor:not-allowed}
-    #canvasWrap{position:relative;display:flex;flex:1;min-height:0;overflow:auto;align-items:center;justify-content:center;touch-action:pan-x pan-y;background-color:#f8fafc;background-image:radial-gradient(#9aa8bb35 1px,transparent 1px);background-size:18px 18px}
-    #canvasWrap.dragging{background-color:#e8f0ff;outline:3px dashed #3978f6;outline-offset:-8px}
-    #stage{position:relative;flex:none;margin:auto;min-width:1px;min-height:1px}
-    canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;max-height:none;transform:translate(-50%,-50%) scale(var(--zoom,1));transform-origin:center center;user-select:none;-webkit-user-select:none;touch-action:none}
-    #bg{box-shadow:0 10px 35px #18223526;border-radius:4px}#overlay{cursor:crosshair}
-    footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 14px;background:#fff;border-top:1px solid #dfe5ee;color:#4b5870;font-size:.82rem}
-    .zoom-controls{position:sticky;bottom:12px;z-index:1;display:flex;align-items:center;gap:6px;width:max-content;margin:-58px 12px 12px auto;padding:6px;border:1px solid #dce3ee;border-radius:12px;background:#ffffffed;box-shadow:0 4px 18px #1720331a}
-    .zoom-controls button{min-width:42px;padding:7px 10px}.zoom-label{min-width:48px;text-align:center;font-size:.82rem;font-weight:700;color:#25334a}
-    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-    @media(max-width:850px){header{gap:8px;padding:8px 10px}.hint{display:none}.toolbar{margin-left:0;width:100%;gap:6px}.group{flex:1;justify-content:center;padding:5px}.group label{font-size:.75rem}input[type=range]{width:70px}footer{font-size:.74rem;padding:7px 10px}}
-    @media(max-width:520px){header{padding:7px}.brand{width:100%;text-align:center}.toolbar{justify-content:center}.group{width:100%;flex-wrap:wrap}.group button{flex:1}footer{justify-content:center;text-align:center}.hint{display:none}}
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#172033;background:#eef2f8;font-synthesis:none;text-rendering:optimizeLegibility}*{box-sizing:border-box}html,body{height:100%;margin:0}body{overflow:hidden}.app{height:100%;height:100dvh;display:flex;flex-direction:column}
+    header{z-index:2;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 12px;background:#101827;color:#fff;box-shadow:0 5px 20px #1113}.brand{font-weight:750;font-size:1.04rem;white-space:nowrap}.hint{font-size:.8rem;color:#c5d0e0}.toolbar{margin-left:auto;display:flex;align-items:center;gap:7px;flex-wrap:wrap}.group{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:5px 8px;border:1px solid #ffffff20;border-radius:11px;background:#ffffff0b}
+    label{display:inline-flex;align-items:center;gap:5px;font-size:.76rem;color:#edf2fa;white-space:nowrap}input[type=range]{width:75px;accent-color:#72a2ff}input[type=color]{width:28px;height:28px;padding:1px;border:0;border-radius:5px;background:transparent}input[type=checkbox]{accent-color:#4b83f5}button,select{min-height:36px;padding:7px 9px;border:0;border-radius:8px;background:#3978f6;color:#fff;font:inherit;font-size:.8rem;font-weight:650;cursor:pointer;touch-action:manipulation}select{background:#e8edf5;color:#182235}button:hover{filter:brightness(1.08)}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #ffc857;outline-offset:2px}button.secondary{background:#e8edf5;color:#182235}button.active{background:#f3b73f;color:#172033}button:disabled{opacity:.5;cursor:not-allowed}
+    #canvasWrap{position:relative;display:flex;flex:1;min-height:0;overflow:auto;align-items:center;justify-content:center;touch-action:pan-x pan-y;background-color:#f8fafc;background-image:radial-gradient(#9aa8bb35 1px,transparent 1px);background-size:18px 18px}#canvasWrap.grid{background-image:linear-gradient(#94a3b822 1px,transparent 1px),linear-gradient(90deg,#94a3b822 1px,transparent 1px);background-size:24px 24px}#canvasWrap.dragging{background-color:#e8f0ff;outline:3px dashed #3978f6;outline-offset:-8px}#stage{position:relative;flex:none;margin:auto;min-width:1px;min-height:1px}canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;max-height:none;transform:translate(-50%,-50%) scale(var(--zoom,1));transform-origin:center center;user-select:none;-webkit-user-select:none;touch-action:none}#bg{box-shadow:0 10px 35px #18223526;border-radius:4px}#overlay{cursor:crosshair}
+    footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:7px 12px;background:#fff;border-top:1px solid #dfe5ee;color:#4b5870;font-size:.78rem}.zoom-controls{position:sticky;bottom:10px;z-index:1;display:flex;align-items:center;gap:5px;width:max-content;margin:-52px 10px 10px auto;padding:5px;border:1px solid #dce3ee;border-radius:11px;background:#ffffffed;box-shadow:0 4px 18px #1720331a}.zoom-controls button{min-width:38px}.zoom-label{min-width:45px;text-align:center;font-size:.8rem;font-weight:700;color:#25334a}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media(max-width:980px){header{gap:7px;padding:7px}.hint{display:none}.toolbar{margin-left:0;width:100%;gap:5px}.group{flex:1;justify-content:center;padding:4px}.group label{font-size:.72rem}input[type=range]{width:65px}}@media(max-width:580px){.brand{width:100%;text-align:center}.toolbar{justify-content:center}.group{width:100%}.group.actions button{flex:1}footer{justify-content:center;text-align:center}footer .tips{display:none}}
   </style>
 </head>
 <body>
   <main class="app">
     <header>
-      <div class="brand">✏️ Tracing Canvas</div>
-      <div class="hint">Upload or drop a picture to get started</div>
+      <div class="brand">✏️ Tracing Canvas</div><div class="hint">Your work saves automatically on this device.</div>
       <div class="toolbar">
-        <div class="group" aria-label="Image and brush settings">
-          <label for="opacity">Image <input id="opacity" type="range" min="0" max="1" step="0.01" value="0.65" title="Image visibility" /></label>
-          <label for="brightness">Screen <input id="brightness" type="range" min="0.6" max="1.6" step="0.05" value="1" title="Screen brightness" /></label>
-          <label for="brushSize">Brush <input id="brushSize" type="range" min="1" max="24" step="1" value="4" title="Brush thickness" /></label>
+        <div class="group" aria-label="Drawing tools">
+          <label>Tool <select id="tool" aria-label="Drawing tool"><option value="pencil">Pencil</option><option value="eraser">Eraser</option><option value="line">Line</option><option value="rectangle">Rectangle</option><option value="ellipse">Ellipse</option></select></label>
+          <label>Color <input id="color" type="color" value="#172033" aria-label="Brush color" /></label>
+          <label>Size <input id="brushSize" type="range" min="1" max="40" step="1" value="4" /><span id="sizeValue">4</span></label>
+          <label>Brush opacity <input id="brushOpacity" type="range" min="0.1" max="1" step="0.05" value="1" /></label>
         </div>
-        <div class="group" aria-label="Canvas actions">
+        <div class="group" aria-label="Image settings">
+          <label>Image <input id="imageOpacity" type="range" min="0" max="1" step="0.01" value="0.65" /></label>
+          <label>Screen <input id="brightness" type="range" min="0.6" max="1.6" step="0.05" value="1" /></label>
+          <label><input id="touchToggle" type="checkbox" checked /> Touch draw</label>
+        </div>
+        <div class="group actions" aria-label="Actions">
           <button id="uploadBtn" class="secondary" type="button">Upload</button>
+          <button id="undoBtn" class="secondary" type="button" title="Undo (Ctrl/⌘ Z)" disabled>Undo</button>
+          <button id="redoBtn" class="secondary" type="button" title="Redo (Ctrl/⌘ Shift Z)" disabled>Redo</button>
           <button id="clearBtn" class="secondary" type="button">Clear</button>
-          <button id="downloadBtn" class="secondary" type="button">Save drawing</button>
-          <button id="panBtn" class="secondary" type="button" aria-pressed="false" title="Move around a zoomed-in image">Move</button>
-          <button id="wakeBtn" type="button" aria-pressed="false" title="Ask your browser to keep the screen awake">Keep screen on</button>
+          <button id="saveBtn" class="secondary" type="button">Save PNG</button>
+          <button id="drawingBtn" class="secondary" type="button">Drawing only</button>
+          <button id="panBtn" class="secondary" type="button" aria-pressed="false">Move</button>
+          <button id="gridBtn" class="secondary" type="button" aria-pressed="false">Grid</button>
+          <button id="fullBtn" class="secondary" type="button">Fullscreen</button>
+          <button id="wakeBtn" type="button" aria-pressed="false">Keep screen on</button>
         </div>
       </div>
     </header>
-
     <section id="canvasWrap" aria-label="Tracing workspace">
-      <div id="stage">
-        <canvas id="bg" aria-hidden="true"></canvas>
-        <canvas id="overlay" aria-label="Drawing area" role="img" tabindex="0"></canvas>
-      </div>
+      <div id="stage"><canvas id="bg" aria-hidden="true"></canvas><canvas id="overlay" aria-label="Drawing area" tabindex="0"></canvas></div>
       <input id="fileInput" class="sr-only" type="file" accept="image/*" />
     </section>
-    <div class="zoom-controls" aria-label="Zoom controls">
-      <button id="zoomOut" class="secondary" type="button" aria-label="Zoom out">−</button>
-      <span id="zoomLabel" class="zoom-label" aria-live="polite">100%</span>
-      <button id="zoomIn" class="secondary" type="button" aria-label="Zoom in">+</button>
-      <button id="fitBtn" class="secondary" type="button" title="Fit image to workspace">Fit</button>
-    </div>
-    <footer><span>Draw with touch or mouse. Turn on <b>Move</b> to pan while zoomed in; use + / − or Ctrl/⌘ + mouse wheel to zoom.</span><span id="status" role="status" aria-live="polite">Ready</span></footer>
+    <div class="zoom-controls" aria-label="Zoom controls"><button id="zoomOut" class="secondary" type="button" aria-label="Zoom out">−</button><span id="zoomLabel" class="zoom-label" aria-live="polite">100%</span><button id="zoomIn" class="secondary" type="button" aria-label="Zoom in">+</button><button id="fitBtn" class="secondary" type="button">Fit</button></div>
+    <footer><span class="tips">Draw with touch or mouse; use Move to pan. Ctrl/⌘ + wheel zooms.</span><span id="status" role="status" aria-live="polite">Ready</span></footer>
   </main>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const bg=$('#bg'), overlay=$('#overlay'), stage=$('#stage'), wrap=$('#canvasWrap');
+  const bgCtx=bg.getContext('2d'), ctx=overlay.getContext('2d');
+  const imageOpacity=$('#imageOpacity'), brightness=$('#brightness'), brushSize=$('#brushSize'), brushOpacity=$('#brushOpacity'), color=$('#color'), tool=$('#tool');
+  const status=$('#status'), fileInput=$('#fileInput'), zoomLabel=$('#zoomLabel');
+  const MIN_ZOOM=.2, MAX_ZOOM=6, HISTORY_LIMIT=16, DB_NAME='tracing-canvas-v2';
+  let image=null, imageDataUrl=null, zoom=1, drawing=false, moving=false, panMode=false, start=null, snapshot=null, pointers=new Map(), pinch=null, wakeLock=null, keepAwake=false;
+  const undoStack=[], redoStack=[];
 
-  <script>
-    (() => {
-      const bg = document.querySelector('#bg'), overlay = document.querySelector('#overlay');
-      const stage = document.querySelector('#stage'), wrap = document.querySelector('#canvasWrap');
-      const opacity = document.querySelector('#opacity'), brightness = document.querySelector('#brightness');
-      const brushSize = document.querySelector('#brushSize'), fileInput = document.querySelector('#fileInput');
-      const zoomLabel = document.querySelector('#zoomLabel'), status = document.querySelector('#status');
-      const wakeBtn = document.querySelector('#wakeBtn'), panBtn = document.querySelector('#panBtn');
-      const bgCtx = bg.getContext('2d'), ctx = overlay.getContext('2d');
-      let image = null, zoom = 1, drawing = false, moving = false, panMode = false, last = null;
-      let wakeLock = null, keepAwake = false;
-      const MIN_ZOOM = 0.25, MAX_ZOOM = 5;
+  function setStatus(message){status.textContent=message;}
+  function updateStage(){stage.style.width=`${Math.max(1,overlay.width*zoom)}px`;stage.style.height=`${Math.max(1,overlay.height*zoom)}px`;stage.style.setProperty('--zoom',zoom);zoomLabel.textContent=`${Math.round(zoom*100)}%`;}
+  function renderImage(){bgCtx.clearRect(0,0,bg.width,bg.height);if(image){bgCtx.globalAlpha=Number(imageOpacity.value);bgCtx.drawImage(image,0,0,bg.width,bg.height);bgCtx.globalAlpha=1;}}
+  function updateHistoryButtons(){ $('#undoBtn').disabled=undoStack.length<2; $('#redoBtn').disabled=redoStack.length===0; }
+  function saveHistory(){try{undoStack.push(ctx.getImageData(0,0,overlay.width,overlay.height));if(undoStack.length>HISTORY_LIMIT)undoStack.shift();redoStack.length=0;updateHistoryButtons();}catch(e){setStatus('Canvas is too large for undo history.');}}
+  function restoreState(state){if(!state)return;ctx.clearRect(0,0,overlay.width,overlay.height);ctx.putImageData(state,0,0);scheduleSave();updateHistoryButtons();}
+  function undo(){if(undoStack.length<2)return;redoStack.push(undoStack.pop());restoreState(undoStack[undoStack.length-1]);setStatus('Undo');}
+  function redo(){if(!redoStack.length)return;const s=redoStack.pop();undoStack.push(s);restoreState(s);setStatus('Redo');}
+  function resize(w,h,preserve=true){w=Math.max(1,Math.round(w));h=Math.max(1,Math.round(h));let old=null;if(preserve&&overlay.width&&overlay.height){old=document.createElement('canvas');old.width=overlay.width;old.height=overlay.height;old.getContext('2d').drawImage(overlay,0,0);}bg.width=overlay.width=w;bg.height=overlay.height=h;bg.style.width=overlay.style.width=`${w}px`;bg.style.height=overlay.style.height=`${h}px`;if(old)ctx.drawImage(old,0,0,old.width,old.height,0,0,w,h);renderImage();updateStage();undoStack.length=0;redoStack.length=0;saveHistory();}
+  function fitImage(img){const maxW=Math.max(160,wrap.clientWidth-36),maxH=Math.max(160,wrap.clientHeight-36),ratio=Math.min(maxW/img.width,maxH/img.height,1);resize(img.width*ratio,img.height*ratio,false);zoom=1;updateStage();wrap.scrollTo(0,0);}
+  function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,1);req.onupgradeneeded=()=>req.result.createObjectStore('session');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
+  let saveTimer;
+  function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveSession,500);}
+  async function saveSession(){try{const db=await openDB(),tx=db.transaction('session','readwrite');tx.objectStore('session').put({imageDataUrl,width:overlay.width,height:overlay.height,drawing:overlay.toDataURL('image/png'),zoom,opacity:imageOpacity.value,brightness:brightness.value,brushSize:brushSize.value,color:color.value,brushOpacity:brushOpacity.value,tool:tool.value},'current');tx.oncomplete=()=>db.close();tx.onerror=()=>{db.close();setStatus('Could not autosave; download your work to keep it.');};}catch(_){setStatus('Autosave unavailable; use Save PNG to keep your work.');}}
+  async function restoreSession(){try{const db=await openDB(),tx=db.transaction('session','readonly'),req=tx.objectStore('session').get('current');req.onsuccess=()=>{const s=req.result;db.close();if(!s)return;imageDataUrl=s.imageDataUrl||null;imageOpacity.value=s.opacity??.65;brightness.value=s.brightness??1;brushSize.value=s.brushSize??4;color.value=s.color||'#172033';brushOpacity.value=s.brushOpacity??1;tool.value=s.tool||'pencil';$('#sizeValue').textContent=brushSize.value;wrap.style.filter=`brightness(${brightness.value})`;const restoreDrawing=()=>{resize(s.width||800,s.height||600,false);if(s.drawing){const d=new Image();d.onload=()=>{ctx.drawImage(d,0,0,overlay.width,overlay.height);undoStack.length=0;saveHistory();};d.src=s.drawing;}if(image)renderImage();zoom=s.zoom||1;updateStage();setStatus('Restored your last session');};if(imageDataUrl){image=new Image();image.onload=restoreDrawing;image.onerror=restoreDrawing;image.src=imageDataUrl;}else restoreDrawing();};req.onerror=()=>db.close();}catch(_){}}
+  function loadFile(file){if(!file||!file.type.startsWith('image/')){setStatus('Please choose an image file.');return;}const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{image=img;imageDataUrl=reader.result;fitImage(img);setStatus('Image ready — autosave on');scheduleSave();};img.onerror=()=>setStatus('Could not open that image.');img.src=reader.result;};reader.onerror=()=>setStatus('Could not read that file.');reader.readAsDataURL(file);}
+  function changeZoom(next,anchorX=wrap.clientWidth/2,anchorY=wrap.clientHeight/2){const old=zoom;zoom=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,next));const x=(wrap.scrollLeft+anchorX)/old,y=(wrap.scrollTop+anchorY)/old;updateStage();wrap.scrollLeft=Math.max(0,x*zoom-anchorX);wrap.scrollTop=Math.max(0,y*zoom-anchorY);scheduleSave();}
+  function point(e){const r=overlay.getBoundingClientRect();return{x:(e.clientX-r.left)*overlay.width/r.width,y:(e.clientY-r.top)*overlay.height/r.height};}
+  function midpoint(a,b){return{x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
+  function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+  function drawShape(p){ctx.save();ctx.globalAlpha=Number(brushOpacity.value);ctx.strokeStyle=color.value;ctx.lineWidth=Number(brushSize.value);ctx.lineCap=ctx.lineJoin='round';ctx.beginPath();if(tool.value==='line'){ctx.moveTo(start.x,start.y);ctx.lineTo(p.x,p.y);}else if(tool.value==='rectangle'){ctx.rect(start.x,start.y,p.x-start.x,p.y-start.y);}else{ctx.ellipse((start.x+p.x)/2,(start.y+p.y)/2,Math.abs(p.x-start.x)/2,Math.abs(p.y-start.y)/2,0,0,Math.PI*2);}ctx.stroke();ctx.restore();}
+  overlay.addEventListener('pointerdown',e=>{pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(e.pointerType==='touch'&&!$('#touchToggle').checked)return;if(pointers.size===2){drawing=false;moving=false;const pts=[...pointers.values()];pinch={distance:distance(pts[0],pts[1]),zoom,mid:midpoint(pts[0],pts[1])};return;}overlay.setPointerCapture(e.pointerId);if(panMode||e.button===1||e.shiftKey){moving=true;start={x:e.clientX,y:e.clientY};overlay.style.cursor='grabbing';e.preventDefault();return;}drawing=true;start=point(e);snapshot=ctx.getImageData(0,0,overlay.width,overlay.height);if(tool.value==='pencil'||tool.value==='eraser'){ctx.beginPath();ctx.moveTo(start.x,start.y);ctx.lineWidth=Number(brushSize.value);ctx.lineCap=ctx.lineJoin='round';ctx.globalAlpha=Number(brushOpacity.value);ctx.strokeStyle=tool.value==='eraser'?'rgba(0,0,0,1)':color.value;ctx.globalCompositeOperation=tool.value==='eraser'?'destination-out':'source-over';ctx.lineTo(start.x+.01,start.y+.01);ctx.stroke();ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}e.preventDefault();});
+  overlay.addEventListener('pointermove',e=>{if(pointers.has(e.pointerId))pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinch&&pointers.size>=2){const pts=[...pointers.values()],mid=midpoint(pts[0],pts[1]),ratio=distance(pts[0],pts[1])/pinch.distance;changeZoom(pinch.zoom*ratio,mid.x-wrap.getBoundingClientRect().left,mid.y-wrap.getBoundingClientRect().top);return;}if(moving){wrap.scrollLeft-=e.clientX-start.x;wrap.scrollTop-=e.clientY-start.y;start={x:e.clientX,y:e.clientY};return;}if(!drawing)return;const p=point(e);if(tool.value==='pencil'||tool.value==='eraser'){ctx.globalAlpha=Number(brushOpacity.value);ctx.globalCompositeOperation=tool.value==='eraser'?'destination-out':'source-over';ctx.strokeStyle=color.value;ctx.lineWidth=Number(brushSize.value);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}else{ctx.putImageData(snapshot,0,0);drawShape(p);}e.preventDefault();});
+  function finish(e){if(pointers.has(e.pointerId))pointers.delete(e.pointerId);if(pinch){pinch=null;return;}if(drawing){drawing=false;ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';saveHistory();scheduleSave();}moving=false;overlay.style.cursor=panMode?'grab':'crosshair';if(overlay.hasPointerCapture(e.pointerId))overlay.releasePointerCapture(e.pointerId);}
+  overlay.addEventListener('pointerup',finish);overlay.addEventListener('pointercancel',finish);overlay.addEventListener('lostpointercapture',()=>{drawing=moving=false;});
 
-      function resize(w, h, preserve = true) {
-        w = Math.max(1, Math.round(w)); h = Math.max(1, Math.round(h));
-        let old;
-        if (preserve && overlay.width && overlay.height) {
-          old = document.createElement('canvas'); old.width = overlay.width; old.height = overlay.height;
-          old.getContext('2d').drawImage(overlay, 0, 0);
-        }
-        bg.width = overlay.width = w; bg.height = overlay.height = h;
-        bg.style.width = overlay.style.width = `${w}px`;
-        bg.style.height = overlay.style.height = `${h}px`;
-        if (old) ctx.drawImage(old, 0, 0, old.width, old.height, 0, 0, w, h);
-        updateStage(); drawImage();
-      }
-
-      function updateStage() {
-        stage.style.width = `${Math.max(1, overlay.width * zoom)}px`;
-        stage.style.height = `${Math.max(1, overlay.height * zoom)}px`;
-        stage.style.setProperty('--zoom', zoom);
-        zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
-      }
-
-      function drawImage() {
-        bgCtx.clearRect(0, 0, bg.width, bg.height);
-        if (image) { bgCtx.globalAlpha = Number(opacity.value); bgCtx.drawImage(image, 0, 0, bg.width, bg.height); bgCtx.globalAlpha = 1; }
-      }
-
-      function fitImage(img) {
-        const maxW = Math.max(160, wrap.clientWidth - 36), maxH = Math.max(160, wrap.clientHeight - 36);
-        const ratio = Math.min(maxW / img.width, maxH / img.height, 1);
-        resize(img.width * ratio, img.height * ratio, false);
-        ctx.clearRect(0, 0, overlay.width, overlay.height);
-        zoom = 1; updateStage(); wrap.scrollTo({ left: 0, top: 0, behavior: 'instant' });
-      }
-
-      function loadFile(file) {
-        if (!file || !file.type.startsWith('image/')) { status.textContent = 'Please choose an image file.'; return; }
-        const url = URL.createObjectURL(file), img = new Image();
-        img.onload = () => { image = img; fitImage(img); URL.revokeObjectURL(url); status.textContent = 'Image ready'; };
-        img.onerror = () => { URL.revokeObjectURL(url); status.textContent = 'Could not open that image.'; };
-        img.src = url;
-      }
-
-      function changeZoom(next) {
-        const old = zoom; zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, next));
-        const cx = (wrap.scrollLeft + wrap.clientWidth / 2) / old;
-        const cy = (wrap.scrollTop + wrap.clientHeight / 2) / old;
-        updateStage();
-        wrap.scrollLeft = Math.max(0, cx * zoom - wrap.clientWidth / 2);
-        wrap.scrollTop = Math.max(0, cy * zoom - wrap.clientHeight / 2);
-      }
-
-      function point(e) {
-        const r = overlay.getBoundingClientRect();
-        return { x: (e.clientX - r.left) * overlay.width / r.width, y: (e.clientY - r.top) * overlay.height / r.height };
-      }
-
-      overlay.addEventListener('pointerdown', e => {
-        if (e.pointerType === 'touch' && !touchEnabled()) return;
-        overlay.setPointerCapture(e.pointerId);
-        if (panMode || e.button === 1 || e.shiftKey) { moving = true; last = { x: e.clientX, y: e.clientY }; overlay.style.cursor = 'grabbing'; e.preventDefault(); return; }
-        drawing = true; last = point(e); ctx.beginPath(); ctx.moveTo(last.x, last.y);
-        ctx.lineWidth = Number(brushSize.value); ctx.lineCap = ctx.lineJoin = 'round'; ctx.strokeStyle = '#111827';
-        ctx.fillStyle = '#111827'; ctx.arc(last.x, last.y, ctx.lineWidth / 2, 0, Math.PI * 2); ctx.fill(); e.preventDefault();
-      });
-      overlay.addEventListener('pointermove', e => {
-        if (moving) { wrap.scrollLeft -= e.clientX - last.x; wrap.scrollTop -= e.clientY - last.y; last = { x: e.clientX, y: e.clientY }; return; }
-        if (!drawing) return;
-        const p = point(e); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p; e.preventDefault();
-      });
-      function finish(e) { drawing = moving = false; overlay.style.cursor = panMode ? 'grab' : 'crosshair'; if (e && overlay.hasPointerCapture(e.pointerId)) overlay.releasePointerCapture(e.pointerId); }
-      overlay.addEventListener('pointerup', finish); overlay.addEventListener('pointercancel', finish);
-      overlay.addEventListener('lostpointercapture', () => { drawing = moving = false; });
-
-      function touchEnabled() { return document.querySelector('#touchToggle')?.checked !== false; }
-      // A small explicit touch-drawing switch helps prevent accidental marks while paper rests on the screen.
-      const touchToggle = document.createElement('input');
-      touchToggle.type = 'checkbox'; touchToggle.id = 'touchToggle'; touchToggle.checked = true;
-      touchToggle.className = 'sr-only'; document.body.appendChild(touchToggle);
-
-      document.querySelector('#uploadBtn').addEventListener('click', () => { fileInput.value = ''; fileInput.click(); });
-      fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
-      document.querySelector('#clearBtn').addEventListener('click', () => { ctx.clearRect(0, 0, overlay.width, overlay.height); status.textContent = 'Drawing cleared'; });
-      document.querySelector('#downloadBtn').addEventListener('click', () => {
-        const out = document.createElement('canvas'); out.width = overlay.width; out.height = overlay.height;
-        const outCtx = out.getContext('2d'); if (image) outCtx.drawImage(image, 0, 0, out.width, out.height); outCtx.drawImage(overlay, 0, 0);
-        const a = document.createElement('a'); a.download = 'tracing.png'; a.href = out.toDataURL('image/png'); a.click();
-      });
-      opacity.addEventListener('input', drawImage);
-      brightness.addEventListener('input', () => { wrap.style.filter = `brightness(${brightness.value})`; });
-      document.querySelector('#zoomIn').addEventListener('click', () => changeZoom(zoom * 1.25));
-      document.querySelector('#zoomOut').addEventListener('click', () => changeZoom(zoom / 1.25));
-      document.querySelector('#fitBtn').addEventListener('click', () => { if (image) fitImage(image); else { zoom = 1; updateStage(); } });
-      panBtn.addEventListener('click', () => { panMode = !panMode; panBtn.classList.toggle('active', panMode); panBtn.setAttribute('aria-pressed', panMode); panBtn.textContent = panMode ? 'Move: On' : 'Move'; overlay.style.cursor = panMode ? 'grab' : 'crosshair'; });
-      wrap.addEventListener('wheel', e => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); changeZoom(zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12)); } }, { passive: false });
-      wrap.addEventListener('dragover', e => { e.preventDefault(); wrap.classList.add('dragging'); });
-      wrap.addEventListener('dragleave', () => wrap.classList.remove('dragging'));
-      wrap.addEventListener('drop', e => { e.preventDefault(); wrap.classList.remove('dragging'); loadFile(e.dataTransfer.files[0]); });
-      document.addEventListener('keydown', e => {
-        if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '=')) { e.preventDefault(); changeZoom(zoom * 1.25); }
-        if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); changeZoom(zoom / 1.25); }
-        if (e.key === 'Escape' && panMode) panBtn.click();
-      });
-      window.addEventListener('resize', () => { if (image) fitImage(image); });
-
-      async function requestWakeLock() {
-        if (!keepAwake || !('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
-        try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); status.textContent = 'Screen-on request active'; }
-        catch (_) { status.textContent = 'Screen-on request unavailable; adjust your device timeout'; }
-      }
-      wakeBtn.addEventListener('click', async () => {
-        keepAwake = !keepAwake; wakeBtn.classList.toggle('active', keepAwake); wakeBtn.setAttribute('aria-pressed', keepAwake); wakeBtn.textContent = keepAwake ? 'Screen on: On' : 'Keep screen on';
-        if (keepAwake) await requestWakeLock(); else { if (wakeLock) await wakeLock.release(); wakeLock = null; status.textContent = 'Ready'; }
-      });
-      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') requestWakeLock(); });
-
-      function initialSize() { resize(Math.max(220, Math.min(wrap.clientWidth - 36, 1000)), Math.max(180, Math.min(wrap.clientHeight - 36, 700)), false); }
-      initialSize(); updateStage();
-    })();
-  </script>
+  $('#uploadBtn').addEventListener('click',()=>{fileInput.value='';fileInput.click();});fileInput.addEventListener('change',e=>loadFile(e.target.files[0]));
+  $('#undoBtn').addEventListener('click',undo);$('#redoBtn').addEventListener('click',redo);
+  $('#clearBtn').addEventListener('click',()=>{if(!confirm('Clear the drawing? You can undo this.'))return;ctx.clearRect(0,0,overlay.width,overlay.height);saveHistory();scheduleSave();setStatus('Drawing cleared');});
+  function exportPNG(includeImage){const out=document.createElement('canvas');out.width=overlay.width;out.height=overlay.height;const o=out.getContext('2d');if(includeImage&&image)o.drawImage(image,0,0,out.width,out.height);o.drawImage(overlay,0,0);const a=document.createElement('a');a.download=includeImage?'tracing.png':'tracing-transparent.png';a.href=out.toDataURL('image/png');a.click();}
+  $('#saveBtn').addEventListener('click',()=>exportPNG(true));$('#drawingBtn').addEventListener('click',()=>exportPNG(false));
+  $('#imageOpacity').addEventListener('input',()=>{renderImage();scheduleSave();});$('#brightness').addEventListener('input',()=>{wrap.style.filter=`brightness(${brightness.value})`;scheduleSave();});
+  brushSize.addEventListener('input',()=>{$('#sizeValue').textContent=brushSize.value;scheduleSave();});[brushOpacity,color,tool].forEach(el=>el.addEventListener('change',scheduleSave));
+  $('#zoomIn').addEventListener('click',()=>changeZoom(zoom*1.25));$('#zoomOut').addEventListener('click',()=>changeZoom(zoom/1.25));$('#fitBtn').addEventListener('click',()=>{if(image)fitImage(image);else{zoom=1;updateStage();}scheduleSave();});
+  $('#panBtn').addEventListener('click',()=>{panMode=!panMode;$('#panBtn').classList.toggle('active',panMode);$('#panBtn').setAttribute('aria-pressed',panMode);$('#panBtn').textContent=panMode?'Move: On':'Move';overlay.style.cursor=panMode?'grab':'crosshair';});
+  $('#gridBtn').addEventListener('click',()=>{wrap.classList.toggle('grid');$('#gridBtn').classList.toggle('active',wrap.classList.contains('grid'));$('#gridBtn').setAttribute('aria-pressed',wrap.classList.contains('grid'));});
+  $('#fullBtn').addEventListener('click',async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen();}catch(_){setStatus('Fullscreen is unavailable in this browser.');}});
+  wrap.addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey){e.preventDefault();const r=wrap.getBoundingClientRect();changeZoom(zoom*(e.deltaY<0?1.12:1/1.12),e.clientX-r.left,e.clientY-r.top);}}, {passive:false});
+  wrap.addEventListener('dragover',e=>{e.preventDefault();wrap.classList.add('dragging');});wrap.addEventListener('dragleave',()=>wrap.classList.remove('dragging'));wrap.addEventListener('drop',e=>{e.preventDefault();wrap.classList.remove('dragging');loadFile(e.dataTransfer.files[0]);});
+  document.addEventListener('keydown',e=>{const mod=e.ctrlKey||e.metaKey;if(mod&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();}else if(mod&&e.key.toLowerCase()==='y'){e.preventDefault();redo();}else if(mod&&(e.key==='+'||e.key==='=')){e.preventDefault();changeZoom(zoom*1.25);}else if(mod&&e.key==='-'){e.preventDefault();changeZoom(zoom/1.25);}else if(e.key==='Escape'&&panMode)$('#panBtn').click();});
+  async function requestWakeLock(){if(!keepAwake||!('wakeLock'in navigator)||document.visibilityState!=='visible')return;try{wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null;});setStatus('Screen-on request active');}catch(_){setStatus('Screen-on unavailable; change device display timeout.');}}
+  $('#wakeBtn').addEventListener('click',async()=>{keepAwake=!keepAwake;$('#wakeBtn').classList.toggle('active',keepAwake);$('#wakeBtn').setAttribute('aria-pressed',keepAwake);$('#wakeBtn').textContent=keepAwake?'Screen on: On':'Keep screen on';if(keepAwake)await requestWakeLock();else if(wakeLock){await wakeLock.release();wakeLock=null;setStatus('Ready');}});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')requestWakeLock();});
+  window.addEventListener('resize',()=>{if(image)fitImage(image);});
+  resize(Math.max(220,Math.min(wrap.clientWidth-36,1000)),Math.max(180,Math.min(wrap.clientHeight-36,700)),false);restoreSession();
+})();
+</script>
 </body>
 </html>
