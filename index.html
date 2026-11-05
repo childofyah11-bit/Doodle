@@ -1,555 +1,200 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <title>Tracing Canvas</title>
-    <style>
-      :root {
-        --bg: #f3f5f9;
-        --panel: rgba(17, 17, 17, 0.96);
-        --panel-2: #1d1d1d;
-        --primary: #2b6bf6;
-        --primary-strong: #1f57d7;
-        --secondary: #e8ecf3;
-        --secondary-text: #1c2430;
-        --text: #ffffff;
-        --muted: #dfe6f0;
-        --shadow: rgba(15, 23, 42, 0.18);
-      }
-
-      * { box-sizing: border-box; }
-
-      html, body {
-        margin: 0;
-        height: 100%;
-        font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
-        background: var(--bg);
-        color: var(--secondary-text);
-      }
-
-      body {
-        min-height: 100vh;
-      }
-
-      .app {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-      }
-
-      header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-        padding: 12px 16px;
-        background: var(--panel);
-        color: var(--text);
-        box-shadow: 0 8px 20px var(--shadow);
-        position: relative;
-        z-index: 2;
-      }
-
-      .brand {
-        font-weight: 700;
-        letter-spacing: 0.02em;
-        font-size: 1.05rem;
-      }
-
-      .toolbar {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-left: auto;
-      }
-
-      .toolbar-group {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 999px;
-        padding: 6px 10px;
-      }
-
-      .dropHint {
-        color: var(--muted);
-        font-size: 0.88rem;
-        opacity: 0.9;
-        white-space: nowrap;
-      }
-
-      .control {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        color: var(--text);
-        font-size: 0.8rem;
-      }
-
-      input[type="range"] {
-        width: 120px;
-        accent-color: var(--primary);
-      }
-
-      button,
-      .uploadButton {
-        appearance: none;
-        border: 0;
-        border-radius: 8px;
-        padding: 8px 12px;
-        font: inherit;
-        font-weight: 600;
-        cursor: pointer;
-        transition: transform 0.15s ease, filter 0.15s ease, opacity 0.2s ease;
-        background: var(--primary);
-        color: #fff;
-      }
-
-      button:hover,
-      .uploadButton:hover {
-        filter: brightness(1.04);
-      }
-
-      button:active,
-      .uploadButton:active {
-        transform: translateY(1px);
-      }
-
-      button.secondary {
-        background: var(--secondary);
-        color: var(--secondary-text);
-      }
-
-      button.ghost {
-        background: rgba(255, 255, 255, 0.08);
-        color: var(--text);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-      }
-
-      .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
-      }
-
-      #canvasWrap {
-        position: relative;
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, #f0f2f5, #ffffff);
-        min-height: 260px;
-        overflow: hidden;
-        touch-action: none;
-        transition: filter 0.1s ease;
-      }
-
-      #canvasWrap::before {
-        content: "Drop an image here or click to upload";
-        position: absolute;
-        inset: auto auto 28px 50%;
-        transform: translateX(-50%);
-        color: rgba(31, 41, 55, 0.6);
-        font-size: 0.85rem;
-        letter-spacing: 0.02em;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-      }
-
-      #canvasWrap.hasImage::before {
-        opacity: 0;
-      }
-
-      canvas {
-        position: absolute;
-        max-width: 100%;
-        max-height: 100%;
-        width: auto;
-        height: auto;
-        display: block;
-        background: transparent;
-        box-shadow: 0 12px 35px rgba(15, 23, 42, 0.12);
-        border-radius: 10px;
-        user-select: none;
-        -webkit-user-select: none;
-        touch-action: none;
-      }
-
-      footer {
-        background: #f8fafc;
-        border-top: 1px solid rgba(148, 163, 184, 0.3);
-        color: #334155;
-        font-size: 0.9rem;
-        padding: 12px 16px 14px;
-        line-height: 1.5;
-      }
-
-      @media (max-width: 760px) {
-        header {
-          padding: 10px 12px;
-        }
-
-        .toolbar {
-          width: 100%;
-          justify-content: space-between;
-          margin-left: 0;
-        }
-
-        .toolbar-group {
-          width: 100%;
-          justify-content: center;
-        }
-
-        input[type="range"] {
-          flex: 1 1 110px;
-          min-width: 90px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="app">
-      <header>
-        <div class="brand">Tracing Canvas</div>
-        <div class="dropHint">Drag &amp; drop an image onto the canvas</div>
-
-        <div class="toolbar">
-          <div class="toolbar-group">
-            <label class="control" for="opacity" title="Image opacity for tracing">
-              Opacity
-              <input id="opacity" type="range" min="0" max="10" step="0.1" value="1" />
-            </label>
-            <label class="control" for="brightness" title="Screen brightness for pencil tracing">
-              Brightness
-              <input id="brightness" type="range" min="0.5" max="3" step="0.1" value="1" />
-            </label>
-            <label class="control" for="brushSize" title="Brush thickness">
-              Brush
-              <input id="brushSize" type="range" min="1" max="20" step="1" value="4" />
-            </label>
-          </div>
-
-          <div class="toolbar-group">
-            <label class="control" style="color:#fff;" for="touchToggle">
-              <input id="touchToggle" type="checkbox" checked /> Touch Draw
-            </label>
-            <button id="uploadBtn" class="uploadButton secondary" type="button">Upload</button>
-            <button id="clearBtn" class="secondary" type="button">Clear</button>
-            <button id="downloadBtn" class="ghost" type="button">Download</button>
-            <button id="lockBtn" type="button">Lock Touch: Off</button>
-          </div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#101827" />
+  <title>Tracing Canvas</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#172033;background:#eef2f8;font-synthesis:none;text-rendering:optimizeLegibility}
+    *{box-sizing:border-box}html,body{height:100%;margin:0}body{overflow:hidden}.app{height:100%;height:100dvh;display:flex;flex-direction:column}
+    header{z-index:2;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 14px;background:#101827;color:#fff;box-shadow:0 5px 20px #1113}
+    .brand{font-weight:750;font-size:1.05rem;white-space:nowrap}.hint{font-size:.82rem;color:#c5d0e0}.toolbar{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .group{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 9px;border:1px solid #ffffff20;border-radius:12px;background:#ffffff0b}
+    label{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:#edf2fa;white-space:nowrap}input[type=range]{width:90px;accent-color:#72a2ff}input[type=checkbox]{accent-color:#4b83f5}
+    button{min-height:38px;padding:8px 11px;border:0;border-radius:9px;background:#3978f6;color:#fff;font:inherit;font-weight:650;cursor:pointer;touch-action:manipulation}
+    button:hover{filter:brightness(1.08)}button:focus-visible,input:focus-visible{outline:3px solid #ffc857;outline-offset:2px}button.secondary{background:#e8edf5;color:#182235}button.active{background:#f3b73f;color:#172033}button:disabled{opacity:.55;cursor:not-allowed}
+    #canvasWrap{position:relative;display:flex;flex:1;min-height:0;overflow:auto;align-items:center;justify-content:center;touch-action:pan-x pan-y;background-color:#f8fafc;background-image:radial-gradient(#9aa8bb35 1px,transparent 1px);background-size:18px 18px}
+    #canvasWrap.dragging{background-color:#e8f0ff;outline:3px dashed #3978f6;outline-offset:-8px}
+    #stage{position:relative;flex:none;margin:auto;min-width:1px;min-height:1px}
+    canvas{position:absolute;left:50%;top:50%;display:block;max-width:none;max-height:none;transform:translate(-50%,-50%) scale(var(--zoom,1));transform-origin:center center;user-select:none;-webkit-user-select:none;touch-action:none}
+    #bg{box-shadow:0 10px 35px #18223526;border-radius:4px}#overlay{cursor:crosshair}
+    footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 14px;background:#fff;border-top:1px solid #dfe5ee;color:#4b5870;font-size:.82rem}
+    .zoom-controls{position:sticky;bottom:12px;z-index:1;display:flex;align-items:center;gap:6px;width:max-content;margin:-58px 12px 12px auto;padding:6px;border:1px solid #dce3ee;border-radius:12px;background:#ffffffed;box-shadow:0 4px 18px #1720331a}
+    .zoom-controls button{min-width:42px;padding:7px 10px}.zoom-label{min-width:48px;text-align:center;font-size:.82rem;font-weight:700;color:#25334a}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media(max-width:850px){header{gap:8px;padding:8px 10px}.hint{display:none}.toolbar{margin-left:0;width:100%;gap:6px}.group{flex:1;justify-content:center;padding:5px}.group label{font-size:.75rem}input[type=range]{width:70px}footer{font-size:.74rem;padding:7px 10px}}
+    @media(max-width:520px){header{padding:7px}.brand{width:100%;text-align:center}.toolbar{justify-content:center}.group{width:100%;flex-wrap:wrap}.group button{flex:1}footer{justify-content:center;text-align:center}.hint{display:none}}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand">✏️ Tracing Canvas</div>
+      <div class="hint">Upload or drop a picture to get started</div>
+      <div class="toolbar">
+        <div class="group" aria-label="Image and brush settings">
+          <label for="opacity">Image <input id="opacity" type="range" min="0" max="1" step="0.01" value="0.65" title="Image visibility" /></label>
+          <label for="brightness">Screen <input id="brightness" type="range" min="0.6" max="1.6" step="0.05" value="1" title="Screen brightness" /></label>
+          <label for="brushSize">Brush <input id="brushSize" type="range" min="1" max="24" step="1" value="4" title="Brush thickness" /></label>
         </div>
-      </header>
-
-      <div id="canvasWrap" aria-label="Tracing area" role="application">
-        <canvas id="bg" aria-hidden="true"></canvas>
-        <canvas id="overlay" aria-label="Drawing canvas"></canvas>
+        <div class="group" aria-label="Canvas actions">
+          <button id="uploadBtn" class="secondary" type="button">Upload</button>
+          <button id="clearBtn" class="secondary" type="button">Clear</button>
+          <button id="downloadBtn" class="secondary" type="button">Save drawing</button>
+          <button id="panBtn" class="secondary" type="button" aria-pressed="false" title="Move around a zoomed-in image">Move</button>
+          <button id="wakeBtn" type="button" aria-pressed="false" title="Ask your browser to keep the screen awake">Keep screen on</button>
+        </div>
       </div>
+    </header>
 
-      <footer>
-        Use a pencil on paper over your screen to trace. Toggle “Touch Draw” off to prevent drawing when the paper touches the screen.
-      </footer>
+    <section id="canvasWrap" aria-label="Tracing workspace">
+      <div id="stage">
+        <canvas id="bg" aria-hidden="true"></canvas>
+        <canvas id="overlay" aria-label="Drawing area" role="img" tabindex="0"></canvas>
+      </div>
+      <input id="fileInput" class="sr-only" type="file" accept="image/*" />
+    </section>
+    <div class="zoom-controls" aria-label="Zoom controls">
+      <button id="zoomOut" class="secondary" type="button" aria-label="Zoom out">−</button>
+      <span id="zoomLabel" class="zoom-label" aria-live="polite">100%</span>
+      <button id="zoomIn" class="secondary" type="button" aria-label="Zoom in">+</button>
+      <button id="fitBtn" class="secondary" type="button" title="Fit image to workspace">Fit</button>
     </div>
+    <footer><span>Draw with touch or mouse. Turn on <b>Move</b> to pan while zoomed in; use + / − or Ctrl/⌘ + mouse wheel to zoom.</span><span id="status" role="status" aria-live="polite">Ready</span></footer>
+  </main>
 
-    <input id="fileInput" class="sr-only" type="file" accept="image/*" />
+  <script>
+    (() => {
+      const bg = document.querySelector('#bg'), overlay = document.querySelector('#overlay');
+      const stage = document.querySelector('#stage'), wrap = document.querySelector('#canvasWrap');
+      const opacity = document.querySelector('#opacity'), brightness = document.querySelector('#brightness');
+      const brushSize = document.querySelector('#brushSize'), fileInput = document.querySelector('#fileInput');
+      const zoomLabel = document.querySelector('#zoomLabel'), status = document.querySelector('#status');
+      const wakeBtn = document.querySelector('#wakeBtn'), panBtn = document.querySelector('#panBtn');
+      const bgCtx = bg.getContext('2d'), ctx = overlay.getContext('2d');
+      let image = null, zoom = 1, drawing = false, moving = false, panMode = false, last = null;
+      let wakeLock = null, keepAwake = false;
+      const MIN_ZOOM = 0.25, MAX_ZOOM = 5;
 
-    <script>
-      (function () {
-        const bg = document.getElementById('bg');
-        const overlay = document.getElementById('overlay');
-        const wrap = document.getElementById('canvasWrap');
-        const opacityInput = document.getElementById('opacity');
-        const brightnessInput = document.getElementById('brightness');
-        const brushSizeInput = document.getElementById('brushSize');
-        const clearBtn = document.getElementById('clearBtn');
-        const lockBtn = document.getElementById('lockBtn');
-        const touchToggle = document.getElementById('touchToggle');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const fileInput = document.getElementById('fileInput');
-        const downloadBtn = document.getElementById('downloadBtn');
-
-        const bgCtx = bg.getContext('2d', { alpha: true });
-        const ctx = overlay.getContext('2d', { alpha: true });
-
-        let img = null;
-        let isDrawing = false;
-        let last = { x: 0, y: 0 };
-        let locked = false;
-        let touchEnabled = true;
-        let pointerActive = false;
-
-        function setCanvasSize(w, h) {
-          bg.width = w;
-          bg.height = h;
-          overlay.width = w;
-          overlay.height = h;
-
-          bg.style.width = `${w}px`;
-          bg.style.height = `${h}px`;
-          overlay.style.width = `${w}px`;
-          overlay.style.height = `${h}px`;
-
-          overlay.style.position = 'absolute';
-          bg.style.position = 'absolute';
+      function resize(w, h, preserve = true) {
+        w = Math.max(1, Math.round(w)); h = Math.max(1, Math.round(h));
+        let old;
+        if (preserve && overlay.width && overlay.height) {
+          old = document.createElement('canvas'); old.width = overlay.width; old.height = overlay.height;
+          old.getContext('2d').drawImage(overlay, 0, 0);
         }
+        bg.width = overlay.width = w; bg.height = overlay.height = h;
+        bg.style.width = overlay.style.width = `${w}px`;
+        bg.style.height = overlay.style.height = `${h}px`;
+        if (old) ctx.drawImage(old, 0, 0, old.width, old.height, 0, 0, w, h);
+        updateStage(); drawImage();
+      }
 
-        function resizeCanvases(width, height) {
-          const containerW = Math.max(200, wrap.clientWidth * 0.95);
-          const containerH = Math.max(180, wrap.clientHeight * 0.95);
-          const w = width || containerW;
-          const h = height || containerH;
+      function updateStage() {
+        stage.style.width = `${Math.max(1, overlay.width * zoom)}px`;
+        stage.style.height = `${Math.max(1, overlay.height * zoom)}px`;
+        stage.style.setProperty('--zoom', zoom);
+        zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
+      }
 
-          setCanvasSize(w, h);
-        }
+      function drawImage() {
+        bgCtx.clearRect(0, 0, bg.width, bg.height);
+        if (image) { bgCtx.globalAlpha = Number(opacity.value); bgCtx.drawImage(image, 0, 0, bg.width, bg.height); bgCtx.globalAlpha = 1; }
+      }
 
-        function updateWrapState() {
-          wrap.classList.toggle('hasImage', !!img);
-        }
+      function fitImage(img) {
+        const maxW = Math.max(160, wrap.clientWidth - 36), maxH = Math.max(160, wrap.clientHeight - 36);
+        const ratio = Math.min(maxW / img.width, maxH / img.height, 1);
+        resize(img.width * ratio, img.height * ratio, false);
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        zoom = 1; updateStage(); wrap.scrollTo({ left: 0, top: 0, behavior: 'instant' });
+      }
 
-        function applyCanvasBrightness() {
-          const brightness = parseFloat(brightnessInput.value) || 1;
-          wrap.style.filter = `brightness(${brightness})`;
-        }
+      function loadFile(file) {
+        if (!file || !file.type.startsWith('image/')) { status.textContent = 'Please choose an image file.'; return; }
+        const url = URL.createObjectURL(file), img = new Image();
+        img.onload = () => { image = img; fitImage(img); URL.revokeObjectURL(url); status.textContent = 'Image ready'; };
+        img.onerror = () => { URL.revokeObjectURL(url); status.textContent = 'Could not open that image.'; };
+        img.src = url;
+      }
 
-        function drawBackgroundImage() {
-          if (!img) return;
-          bgCtx.clearRect(0, 0, bg.width, bg.height);
-          bgCtx.filter = `brightness(${parseFloat(opacityInput.value) || 1})`;
-          bgCtx.drawImage(img, 0, 0, bg.width, bg.height);
-          bgCtx.filter = 'none';
-        }
+      function changeZoom(next) {
+        const old = zoom; zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, next));
+        const cx = (wrap.scrollLeft + wrap.clientWidth / 2) / old;
+        const cy = (wrap.scrollTop + wrap.clientHeight / 2) / old;
+        updateStage();
+        wrap.scrollLeft = Math.max(0, cx * zoom - wrap.clientWidth / 2);
+        wrap.scrollTop = Math.max(0, cy * zoom - wrap.clientHeight / 2);
+      }
 
-        function fitImageToCanvas(image) {
-          const maxW = Math.min(window.innerWidth - 40, image.width);
-          const maxH = Math.min(window.innerHeight - 120, image.height);
-          const ratio = Math.min(maxW / image.width, maxH / image.height, 1);
-          const w = Math.max(220, Math.round(image.width * ratio));
-          const h = Math.max(180, Math.round(image.height * ratio));
+      function point(e) {
+        const r = overlay.getBoundingClientRect();
+        return { x: (e.clientX - r.left) * overlay.width / r.width, y: (e.clientY - r.top) * overlay.height / r.height };
+      }
 
-          resizeCanvases(w, h);
-          drawBackgroundImage();
-          ctx.clearRect(0, 0, overlay.width, overlay.height);
-        }
+      overlay.addEventListener('pointerdown', e => {
+        if (e.pointerType === 'touch' && !touchEnabled()) return;
+        overlay.setPointerCapture(e.pointerId);
+        if (panMode || e.button === 1 || e.shiftKey) { moving = true; last = { x: e.clientX, y: e.clientY }; overlay.style.cursor = 'grabbing'; e.preventDefault(); return; }
+        drawing = true; last = point(e); ctx.beginPath(); ctx.moveTo(last.x, last.y);
+        ctx.lineWidth = Number(brushSize.value); ctx.lineCap = ctx.lineJoin = 'round'; ctx.strokeStyle = '#111827';
+        ctx.fillStyle = '#111827'; ctx.arc(last.x, last.y, ctx.lineWidth / 2, 0, Math.PI * 2); ctx.fill(); e.preventDefault();
+      });
+      overlay.addEventListener('pointermove', e => {
+        if (moving) { wrap.scrollLeft -= e.clientX - last.x; wrap.scrollTop -= e.clientY - last.y; last = { x: e.clientX, y: e.clientY }; return; }
+        if (!drawing) return;
+        const p = point(e); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p; e.preventDefault();
+      });
+      function finish(e) { drawing = moving = false; overlay.style.cursor = panMode ? 'grab' : 'crosshair'; if (e && overlay.hasPointerCapture(e.pointerId)) overlay.releasePointerCapture(e.pointerId); }
+      overlay.addEventListener('pointerup', finish); overlay.addEventListener('pointercancel', finish);
+      overlay.addEventListener('lostpointercapture', () => { drawing = moving = false; });
 
-        function handleImageFile(file) {
-          if (!file || !file.type.startsWith('image/')) return;
+      function touchEnabled() { return document.querySelector('#touchToggle')?.checked !== false; }
+      // A small explicit touch-drawing switch helps prevent accidental marks while paper rests on the screen.
+      const touchToggle = document.createElement('input');
+      touchToggle.type = 'checkbox'; touchToggle.id = 'touchToggle'; touchToggle.checked = true;
+      touchToggle.className = 'sr-only'; document.body.appendChild(touchToggle);
 
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const imgEl = new Image();
-            imgEl.onload = () => {
-              img = imgEl;
-              fitImageToCanvas(imgEl);
-              updateWrapState();
-            };
-            imgEl.src = e.target.result;
-          };
-          reader.readAsDataURL(file);
-        }
+      document.querySelector('#uploadBtn').addEventListener('click', () => { fileInput.value = ''; fileInput.click(); });
+      fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
+      document.querySelector('#clearBtn').addEventListener('click', () => { ctx.clearRect(0, 0, overlay.width, overlay.height); status.textContent = 'Drawing cleared'; });
+      document.querySelector('#downloadBtn').addEventListener('click', () => {
+        const out = document.createElement('canvas'); out.width = overlay.width; out.height = overlay.height;
+        const outCtx = out.getContext('2d'); if (image) outCtx.drawImage(image, 0, 0, out.width, out.height); outCtx.drawImage(overlay, 0, 0);
+        const a = document.createElement('a'); a.download = 'tracing.png'; a.href = out.toDataURL('image/png'); a.click();
+      });
+      opacity.addEventListener('input', drawImage);
+      brightness.addEventListener('input', () => { wrap.style.filter = `brightness(${brightness.value})`; });
+      document.querySelector('#zoomIn').addEventListener('click', () => changeZoom(zoom * 1.25));
+      document.querySelector('#zoomOut').addEventListener('click', () => changeZoom(zoom / 1.25));
+      document.querySelector('#fitBtn').addEventListener('click', () => { if (image) fitImage(image); else { zoom = 1; updateStage(); } });
+      panBtn.addEventListener('click', () => { panMode = !panMode; panBtn.classList.toggle('active', panMode); panBtn.setAttribute('aria-pressed', panMode); panBtn.textContent = panMode ? 'Move: On' : 'Move'; overlay.style.cursor = panMode ? 'grab' : 'crosshair'; });
+      wrap.addEventListener('wheel', e => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); changeZoom(zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12)); } }, { passive: false });
+      wrap.addEventListener('dragover', e => { e.preventDefault(); wrap.classList.add('dragging'); });
+      wrap.addEventListener('dragleave', () => wrap.classList.remove('dragging'));
+      wrap.addEventListener('drop', e => { e.preventDefault(); wrap.classList.remove('dragging'); loadFile(e.dataTransfer.files[0]); });
+      document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '=')) { e.preventDefault(); changeZoom(zoom * 1.25); }
+        if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); changeZoom(zoom / 1.25); }
+        if (e.key === 'Escape' && panMode) panBtn.click();
+      });
+      window.addEventListener('resize', () => { if (image) fitImage(image); });
 
-        function clearDrawing() {
-          ctx.clearRect(0, 0, overlay.width, overlay.height);
-        }
+      async function requestWakeLock() {
+        if (!keepAwake || !('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+        try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); status.textContent = 'Screen-on request active'; }
+        catch (_) { status.textContent = 'Screen-on request unavailable; adjust your device timeout'; }
+      }
+      wakeBtn.addEventListener('click', async () => {
+        keepAwake = !keepAwake; wakeBtn.classList.toggle('active', keepAwake); wakeBtn.setAttribute('aria-pressed', keepAwake); wakeBtn.textContent = keepAwake ? 'Screen on: On' : 'Keep screen on';
+        if (keepAwake) await requestWakeLock(); else { if (wakeLock) await wakeLock.release(); wakeLock = null; status.textContent = 'Ready'; }
+      });
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') requestWakeLock(); });
 
-        function getCanvasPoint(event) {
-          const rect = overlay.getBoundingClientRect();
-          const clientX = event.clientX ?? (event.touches && event.touches[0] ? event.touches[0].clientX : 0);
-          const clientY = event.clientY ?? (event.touches && event.touches[0] ? event.touches[0].clientY : 0);
-
-          return {
-            x: (clientX - rect.left) * (overlay.width / rect.width),
-            y: (clientY - rect.top) * (overlay.height / rect.height)
-          };
-        }
-
-        function beginStroke(event) {
-          if (event.pointerType === 'touch' && !touchEnabled) {
-            return;
-          }
-
-          isDrawing = true;
-          pointerActive = true;
-          last = getCanvasPoint(event);
-
-          ctx.lineJoin = 'round';
-          ctx.lineCap = 'round';
-          ctx.lineWidth = Number(brushSizeInput.value) || 4;
-          ctx.strokeStyle = '#000';
-          ctx.beginPath();
-          ctx.moveTo(last.x, last.y);
-
-          if (typeof event.preventDefault === 'function') {
-            event.preventDefault();
-          }
-        }
-
-        function continueStroke(event) {
-          if (!isDrawing || !pointerActive) return;
-          const p = getCanvasPoint(event);
-          ctx.lineTo(p.x, p.y);
-          ctx.stroke();
-          last = p;
-
-          if (typeof event.preventDefault === 'function') {
-            event.preventDefault();
-          }
-        }
-
-        function endStroke(event) {
-          if (!isDrawing) return;
-          isDrawing = false;
-          pointerActive = false;
-          ctx.closePath();
-
-          if (event && typeof event.preventDefault === 'function') {
-            event.preventDefault();
-          }
-        }
-
-        function attachPointerListeners() {
-          overlay.addEventListener('pointerdown', beginStroke);
-          overlay.addEventListener('pointermove', continueStroke);
-          overlay.addEventListener('pointerup', endStroke);
-          overlay.addEventListener('pointerleave', endStroke);
-          overlay.addEventListener('pointercancel', endStroke);
-        }
-
-        function detachPointerListeners() {
-          overlay.removeEventListener('pointerdown', beginStroke);
-          overlay.removeEventListener('pointermove', continueStroke);
-          overlay.removeEventListener('pointerup', endStroke);
-          overlay.removeEventListener('pointerleave', endStroke);
-          overlay.removeEventListener('pointercancel', endStroke);
-        }
-
-        function setLocked(v) {
-          locked = !!v;
-          lockBtn.textContent = `Lock Touch: ${locked ? 'On' : 'Off'}`;
-
-          if (locked) {
-            document.addEventListener('touchmove', preventDefaultTouch, { passive: false });
-            document.addEventListener('touchstart', preventDoubleTouchZoom, { passive: false });
-            document.addEventListener('gesturestart', preventDefaultTouch);
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.touchAction = 'none';
-          } else {
-            document.removeEventListener('touchmove', preventDefaultTouch, { passive: false });
-            document.removeEventListener('touchstart', preventDoubleTouchZoom, { passive: false });
-            document.removeEventListener('gesturestart', preventDefaultTouch);
-            document.body.style.overflow = '';
-            document.documentElement.style.touchAction = '';
-          }
-        }
-
-        function preventDefaultTouch(e) {
-          if (e.target === overlay || overlay.contains(e.target)) {
-            return;
-          }
-          e.preventDefault();
-        }
-
-        let lastTap = 0;
-        function preventDoubleTouchZoom(e) {
-          const now = Date.now();
-          if (now - lastTap < 300) {
-            e.preventDefault();
-          }
-          lastTap = now;
-        }
-
-        function openFilePicker() {
-          fileInput.value = '';
-          fileInput.click();
-        }
-
-        function downloadCanvas() {
-          const link = document.createElement('a');
-          link.download = 'tracing-canvas.png';
-          link.href = overlay.toDataURL('image/png');
-          link.click();
-        }
-
-        wrap.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'copy';
-        });
-
-        wrap.addEventListener('drop', (e) => {
-          e.preventDefault();
-          const file = e.dataTransfer.files && e.dataTransfer.files[0];
-          if (file) {
-            handleImageFile(file);
-          }
-        });
-
-        wrap.addEventListener('click', () => {
-          if (!img) {
-            openFilePicker();
-          }
-        });
-
-        opacityInput.addEventListener('input', () => {
-          if (img) {
-            drawBackgroundImage();
-          }
-        });
-
-        brightnessInput.addEventListener('input', () => {
-          applyCanvasBrightness();
-        });
-
-        brushSizeInput.addEventListener('input', () => {
-          if (isDrawing) {
-            ctx.lineWidth = Number(brushSizeInput.value) || 4;
-          }
-        });
-
-        fileInput.addEventListener('change', (e) => {
-          const file = e.target.files && e.target.files[0];
-          if (file) {
-            handleImageFile(file);
-          }
-        });
-
-        clearBtn.addEventListener('click', () => {
-          clearDrawing();
-        });
-
-        uploadBtn.addEventListener('click', openFilePicker);
-        downloadBtn.addEventListener('click', downloadCanvas);
-        lockBtn.addEventListener('click', () => setLocked(!locked));
-
-        touchToggle.addEventListener('change', (e) => {
-          touchEnabled = !!e.target.checked;
-        });
-
-        window.addEventListener('resize', () => {
-          if (img) {
-            fitImageToCanvas(img);
-          } else {
-            resizeCanvases(Math.min(window.innerWidth - 40, 800), Math.min(window.innerHeight - 120, 600));
-          }
-        });
-
-        overlay.tabIndex = 0;
-        overlay.style.touchAction = 'none';
-        applyCanvasBrightness();
-        resizeCanvases(Math.min(window.innerWidth - 40, 800), Math.min(window.innerHeight - 120, 600));
-        attachPointerListeners();
-      })();
-    </script>
-  </body>
+      function initialSize() { resize(Math.max(220, Math.min(wrap.clientWidth - 36, 1000)), Math.max(180, Math.min(wrap.clientHeight - 36, 700)), false); }
+      initialSize(); updateStage();
+    })();
+  </script>
+</body>
 </html>
