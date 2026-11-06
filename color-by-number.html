@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f1e9">
+  <meta name="description" content="Turn a picture into a private, interactive color-by-number puzzle right in your browser.">
+  <title>Color by Number Studio — Project Bob</title>
+  <link rel="stylesheet" href="color-by-number.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="index.html"><span class="brand-icon">b.</span><span>Project Bob</span></a>
+      <div class="privacy"><span class="privacy-dot"></span> Images stay on this device</div>
+      <a class="back-link" href="index.html">Back to drawing studio ↗</a>
+    </header>
+
+    <section class="intro">
+      <div class="intro-copy">
+        <span class="eyebrow">A new creative tool</span>
+        <h1>Make any picture a <span>color-by-number</span> puzzle.</h1>
+        <p>Choose an image, build a numbered palette, then color regions at your own pace. Everything runs locally in your browser.</p>
+      </div>
+      <div class="intro-mark" aria-hidden="true">✳</div>
+    </section>
+
+    <section class="workspace" aria-label="Color by number studio">
+      <aside class="controls">
+        <div class="control-heading"><span class="eyebrow">01 — SET UP</span><h2>Your picture</h2></div>
+        <label class="upload-button" for="imageFile"><span class="upload-symbol">↑</span><span><strong>Choose an image</strong><small>JPG, PNG, or WebP · processed here</small></span></label>
+        <input id="imageFile" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+        <div id="fileName" class="file-name">No image selected yet</div>
+
+        <div class="control-block">
+          <div class="label-row"><label for="colorCount">Palette colors</label><output id="colorCountValue">8</output></div>
+          <input id="colorCount" type="range" min="3" max="14" value="8">
+          <div class="range-hints"><span>Simpler</span><span>More detail</span></div>
+        </div>
+        <div class="control-block">
+          <div class="label-row"><label for="detail">Puzzle detail</label><output id="detailValue">140</output></div>
+          <input id="detail" type="range" min="70" max="220" step="10" value="140">
+          <div class="range-hints"><span>Large regions</span><span>Fine regions</span></div>
+        </div>
+        <button id="makePuzzle" class="primary-button" type="button" disabled>Make my puzzle <span>✦</span></button>
+        <div class="control-divider"></div>
+        <div class="control-heading small-heading"><span class="eyebrow">02 — COLOR</span><h2>Number palette</h2></div>
+        <p class="helper-text">Pick a number, then tap matching regions. Or fill every region for that number at once.</p>
+        <div id="palette" class="palette empty" aria-label="Color palette"><span>Make a puzzle to see its colors.</span></div>
+        <button id="fillAll" class="secondary-button" type="button" disabled>Fill all regions for this number</button>
+        <div class="history-row">
+          <button id="undo" class="icon-action" type="button" disabled aria-label="Undo">↶ <span>Undo</span></button>
+          <button id="redo" class="icon-action" type="button" disabled aria-label="Redo">↷ <span>Redo</span></button>
+          <button id="reset" class="icon-action reset-action" type="button" disabled aria-label="Reset puzzle">↺ <span>Reset</span></button>
+        </div>
+      </aside>
+
+      <section class="puzzle-panel" aria-label="Puzzle board">
+        <div class="board-toolbar">
+          <div><span class="eyebrow">YOUR CANVAS</span><h2 id="boardTitle">Ready when you are</h2></div>
+          <div class="board-actions"><span id="progressText" class="progress-text">Upload a picture to begin</span><button id="export" class="export-button" type="button" disabled>Export PNG ↗</button></div>
+        </div>
+        <div id="boardViewport" class="board-viewport">
+          <div id="emptyState" class="empty-state"><div class="empty-art" aria-hidden="true"><span>◒</span><span>◌</span><span>✳</span></div><h3>Your puzzle will appear here.</h3><p>Pick a picture, adjust the detail, and select <strong>Make my puzzle</strong>.</p><label for="imageFile" class="empty-upload">Choose a picture</label></div>
+          <canvas id="board" hidden aria-label="Interactive color-by-number puzzle"></canvas>
+        </div>
+        <div class="board-footer"><span id="status" role="status" aria-live="polite">Private, local image processing. No upload.</span><span>Tip: choose a number before tapping its matching regions.</span></div>
+      </section>
+    </section>
+    <footer class="footer"><span>Project Bob · Made for making</span><span>Color by Number Studio</span></footer>
+  </main>
+  <script src="color-by-number.js"></script>
+</body>
+</html>
