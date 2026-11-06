@@ -1,353 +1,92 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project Bob | Smart Creative Studio</title>
-    <meta name="description" content="Project Bob is a creative workspace for artists, illustrators, and teams to trace, design, and ship better ideas faster." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="page-shell">
-      <header class="site-header">
-        <div class="container nav-wrap">
-          <a class="brand" href="index.html">
-            <span class="brand-mark">✦</span>
-            <span>Project Bob</span>
-          </a>
-          <nav class="main-nav" aria-label="Main navigation">
-            <a href="index.html" class="active">Home</a>
-            <a href="features.html">Features</a>
-            <a href="studio.html">Studio</a>
-            <a href="gallery.html">Gallery</a>
-            <a href="pricing.html">Pricing</a>
-            <a href="tutorials.html">Tutorials</a>
-            <a href="about.html">About</a>
-            <a href="roadmap.html">Roadmap</a>
-            <a href="faq.html">FAQ</a>
-            <a href="contact.html">Contact</a>
-          </nav>
-          <div class="nav-actions">
-            <a href="login.html" class="link-btn">Log in</a>
-            <a href="studio.html" class="primary-btn">Launch Studio</a>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f1e9">
+  <meta name="description" content="Project Bob is a simple, private drawing and tracing workspace that runs in your browser.">
+  <title>Project Bob — Draw something</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="Project Bob home"><span class="brand-icon">b.</span><span>project bob</span></a>
+      <div class="top-note"><span class="save-dot" aria-hidden="true"></span><span id="saveStatus">Saved on this device</span></div>
+      <div class="top-actions">
+        <button class="button quiet" id="newButton" type="button">New canvas</button>
+        <button class="button dark" id="exportButton" type="button">Export drawing <span aria-hidden="true">↗</span></button>
+      </div>
+    </header>
+
+    <section class="editor" aria-label="Drawing editor">
+      <aside class="toolrail" aria-label="Drawing tools">
+        <div class="rail-label">TOOLS</div>
+        <button class="tool-button selected" data-tool="pencil" aria-label="Pencil tool" title="Pencil (B)"><span>✎</span><small>Pencil</small></button>
+        <button class="tool-button" data-tool="eraser" aria-label="Eraser tool" title="Eraser (E)"><span>◩</span><small>Eraser</small></button>
+        <div class="rail-divider"></div>
+        <button class="tool-button" id="undoButton" aria-label="Undo" title="Undo (Ctrl+Z)" disabled><span>↶</span><small>Undo</small></button>
+        <button class="tool-button" id="redoButton" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" disabled><span>↷</span><small>Redo</small></button>
+        <div class="rail-spacer"></div>
+        <button class="tool-button danger-tool" id="clearButton" aria-label="Clear drawing" title="Clear drawing"><span>⌫</span><small>Clear</small></button>
+      </aside>
+
+      <div class="work-area">
+        <div class="canvas-toolbar">
+          <div class="canvas-title"><span class="live-indicator"></span><strong>Untitled sketch</strong><span class="tiny-tag">LOCAL</span></div>
+          <div class="canvas-actions">
+            <button class="icon-button" id="fitButton" type="button" title="Fit canvas">Fit</button>
+            <label class="zoom-control" for="zoomRange"><span>−</span><input id="zoomRange" type="range" min="25" max="200" value="100" aria-label="Canvas zoom"><output id="zoomValue">100%</output><span>+</span></label>
           </div>
         </div>
-      </header>
 
-      <main>
-        <section class="hero">
-          <div class="container hero-grid">
-            <div class="hero-copy">
-              <span class="eyebrow">Creative workflow, supercharged</span>
-              <h1>Turn rough ideas into polished visuals.</h1>
-              <p>
-                Project Bob brings together smart tracing, reference tools, and a smooth creative workflow for artists, designers, and makers.
-              </p>
-              <div class="cta-row">
-                <a href="studio.html" class="primary-btn">Open Studio</a>
-                <a href="features.html" class="secondary-btn">See Features</a>
-              </div>
-              <ul class="mini-stats">
-                <li><strong>12k+</strong><span>projects</span></li>
-                <li><strong>4.9/5</strong><span>satisfaction</span></li>
-                <li><strong>2x</strong><span>faster flow</span></li>
-              </ul>
-            </div>
-            <div class="hero-visual">
-              <div class="visual-card large">
-                <div class="window-bar">
-                  <span></span><span></span><span></span>
-                </div>
-                <div class="canvas-preview">
-                  <div class="preview-image"></div>
-                  <div class="floating-panel panel-one">
-                    <span class="dot green"></span>
-                    Outline AI
-                  </div>
-                  <div class="floating-panel panel-two">
-                    <span class="dot purple"></span>
-                    Smart assist
-                  </div>
-                </div>
+        <div class="canvas-scroll" id="canvasScroll">
+          <div class="canvas-stage" id="canvasStage">
+            <div class="artboard" id="artboard">
+              <canvas id="referenceCanvas" aria-hidden="true"></canvas>
+              <canvas id="drawingCanvas" aria-label="Drawing canvas" tabindex="0"></canvas>
+              <div id="emptyState" class="empty-state">
+                <div class="empty-icon">✳</div>
+                <h1>Make a little something.</h1>
+                <p>Start with a blank canvas, or bring in an image to trace.</p>
+                <button class="button dark" id="addImageButton" type="button">Add a reference image <span>＋</span></button>
+                <span class="drop-hint">You can also drop an image right here</span>
               </div>
             </div>
           </div>
-        </section>
-
-        <section class="logos section-sm">
-          <div class="container">
-            <p>Used by creative teams, studios, and independent makers</p>
-            <div class="logo-row">
-              <span>Northstar</span>
-              <span>Pixel Forge</span>
-              <span>Studio M</span>
-              <span>Bloom Lab</span>
-              <span>Wayline</span>
-            </div>
-          </div>
-        </section>
-
-        <section class="section">
-          <div class="container">
-            <div class="section-heading">
-              <span class="eyebrow">Why Project Bob</span>
-              <h2>Built for clarity, speed, and creative focus.</h2>
-            </div>
-            <div class="card-grid three-up">
-              <article class="info-card">
-                <div class="icon-wrap purple">✦</div>
-                <h3>Reference precision</h3>
-                <p>Work from a clean guide, control opacity, and keep your focus on the important parts of the image.</p>
-              </article>
-              <article class="info-card">
-                <div class="icon-wrap blue">◎</div>
-                <h3>Local smart tools</h3>
-                <p>Enhance, outline, and simplify visuals right in the browser without sending your work to a remote service.</p>
-              </article>
-              <article class="info-card">
-                <div class="icon-wrap green">✎</div>
-                <h3>Fast iteration</h3>
-                <p>Undo, redo, fit your canvas, and export polished work in a clean repeatable flow.</p>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section class="section alt-bg">
-          <div class="container split-layout">
-            <div>
-              <span class="eyebrow">Inside the studio</span>
-              <h2>Everything you need to draw better.</h2>
-              <ul class="check-list">
-                <li>Advanced drawing and eraser tools</li>
-                <li>Zoom and fit controls for comfortable browsing</li>
-                <li>Smooth autosave for session continuity</li>
-                <li>Image enhancement modes for cleaner tracing</li>
-              </ul>
-            </div>
-            <div class="mini-showcase">
-              <div class="showcase-card">
-                <div class="tag-row"><span>Trace</span><span>AI</span></div>
-                <div class="mini-canvas"></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="section">
-          <div class="container">
-            <div class="section-heading center">
-              <span class="eyebrow">Featured use cases</span>
-              <h2>From sketches to product visuals.</h2>
-            </div>
-            <div class="card-grid four-up">
-              <article class="use-card">
-                <h3>Concept art</h3>
-                <p>Build scene ideas and iterate quickly with visual references.</p>
-              </article>
-              <article class="use-card">
-                <h3>Product sketching</h3>
-                <p>Map shapes, proportions, and interface details with precision.</p>
-              </article>
-              <article class="use-card">
-                <h3>Character design</h3>
-                <p>Trace, refine, and mix form ideas with smart assist tools.</p>
-              </article>
-              <article class="use-card">
-                <h3>Marketing mockups</h3>
-                <p>Create polished visual references and presentation-ready scenes.</p>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section class="section cta-band">
-          <div class="container cta-box">
-            <div>
-              <span class="eyebrow">Ready to create?</span>
-              <h2>Start a fresh project today.</h2>
-            </div>
-            <a href="studio.html" class="primary-btn">Launch Project Bob</a>
-          </div>
-        </section>
-      </main>
-
-      <footer class="site-footer">
-        <div class="container footer-wrap">
-          <div>
-            <a class="brand" href="index.html">
-              <span class="brand-mark">✦</span>
-              <span>Project Bob</span>
-            </a>
-          </div>
-          <div class="footer-links">
-            <a href="features.html">Features</a>
-            <a href="pricing.html">Pricing</a>
-            <a href="about.html">About</a>
-            <a href="contact.html">Contact</a>
-          </div>
-          <p>© 2026 Project Bob</p>
+          <div class="canvas-caption"><span>Project Bob is your space. Make it yours.</span><span>⌘ / Ctrl + Z to undo</span></div>
         </div>
-      </footer>
-    </div>
-    <script src="script.js"></script>
-  </body>
+      </div>
+
+      <aside class="inspector" aria-label="Canvas settings">
+        <div class="inspector-heading"><div><span class="eyebrow">YOUR WORKSPACE</span><h2>Make it yours.</h2></div><span class="sparkle">✳</span></div>
+        <div class="setting-block">
+          <div class="setting-title"><label for="brushSize">Brush size</label><output id="brushSizeValue">6 px</output></div>
+          <input class="full-range" id="brushSize" type="range" min="1" max="48" value="6">
+          <div class="range-ends"><span>Fine</span><span>Bold</span></div>
+        </div>
+        <div class="setting-block">
+          <div class="setting-title"><label for="brushColor">Ink color</label><span id="colorName">Ink</span></div>
+          <div class="color-row"><input id="brushColor" type="color" value="#24211f" aria-label="Choose brush color"><div class="swatches" aria-label="Quick colors"><button class="swatch active" data-color="#24211f" style="--swatch:#24211f" aria-label="Ink black"></button><button class="swatch" data-color="#e35d42" style="--swatch:#e35d42" aria-label="Tomato red"></button><button class="swatch" data-color="#3f72c5" style="--swatch:#3f72c5" aria-label="Blue"></button><button class="swatch" data-color="#418a68" style="--swatch:#418a68" aria-label="Green"></button><button class="swatch" data-color="#e0a52e" style="--swatch:#e0a52e" aria-label="Yellow"></button></div></div>
+        </div>
+        <div class="setting-block reference-block">
+          <div class="setting-title"><label>Reference image</label><button class="text-button" id="removeImageButton" type="button" hidden>Remove</button></div>
+          <button class="upload-card" id="uploadCard" type="button"><span class="upload-icon">↥</span><span><strong id="imageAction">Add an image</strong><small>PNG, JPG, or WebP</small></span><span class="upload-arrow">→</span></button>
+          <input id="imageInput" type="file" accept="image/*" hidden>
+          <div id="referenceControls" hidden>
+            <div class="setting-title compact-title"><label for="imageOpacity">Image opacity</label><output id="opacityValue">45%</output></div>
+            <input id="imageOpacity" class="full-range" type="range" min="0" max="100" value="45">
+            <label class="select-label" for="imageMode">Reference look</label>
+            <select id="imageMode" class="select-control"><option value="original">Original</option><option value="enhance">Clearer contrast</option><option value="mono">Black &amp; white</option><option value="outline">Edge outline</option></select>
+            <div id="modeNote" class="helper-note">A quiet guide layer under your drawing.</div>
+          </div>
+        </div>
+        <div class="inspector-bottom"><div class="privacy-icon">⌂</div><div><strong>Just for you.</strong><p>Your work stays in this browser. Nothing gets uploaded.</p></div></div>
+      </aside>
+    </section>
+    <input id="fileInputFallback" type="file" accept="image/*" hidden>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </main>
+  <script src="script.js"></script>
+</body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
