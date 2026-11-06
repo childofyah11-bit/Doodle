@@ -235,7 +235,7 @@
         position: absolute;
         right: 16px;
         top: 16px;
-        width: min(260px, calc(100% - 32px));
+        width: min(280px, calc(100% - 32px));
         padding: 14px 12px 8px;
         border-radius: 14px;
         border: 1px solid rgba(15,23,42,0.1);
@@ -266,6 +266,44 @@
         gap: 8px;
         color: var(--text-soft);
         font-weight: 600;
+      }
+
+      .ai-panel {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(148,163,184,0.28);
+      }
+
+      .ai-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .mini-btn {
+        border: 1px solid rgba(79, 70, 229, 0.18);
+        background: rgba(79,70,229,0.06);
+        color: var(--text);
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .mini-btn.active {
+        background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+        color: white;
+        border-color: transparent;
+      }
+
+      .ai-hint {
+        margin-top: 10px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: rgba(20,184,166,0.08);
+        color: var(--text-soft);
+        font-size: 0.78rem;
+        line-height: 1.4;
       }
 
       .toast {
@@ -316,7 +354,7 @@
           <div class="brand-mark" aria-hidden="true">✏️</div>
           <div>
             <div class="brand-title">Project Bob</div>
-            <div class="brand-sub">A cleaner tracing studio for creative work</div>
+            <div class="brand-sub">AI-assisted tracing studio</div>
           </div>
         </div>
         <button id="saveBtn" class="primary-btn" type="button">Save PNG</button>
@@ -384,6 +422,21 @@
               <label class="check-item"><input id="crosshair" type="checkbox" /> Crosshair</label>
             </div>
           </details>
+
+          <div class="ai-panel">
+            <details open>
+              <summary>AI Assist</summary>
+              <div class="feature-list">
+                <div class="ai-actions">
+                  <button class="mini-btn active" type="button" data-ai-mode="enhance">Enhance</button>
+                  <button class="mini-btn" type="button" data-ai-mode="outline">Outline</button>
+                  <button class="mini-btn" type="button" data-ai-mode="focus">Focus</button>
+                  <button class="mini-btn" type="button" data-ai-mode="clean">Clean</button>
+                </div>
+                <div id="aiHint" class="ai-hint">AI is helping sharpen contrast and simplify the reference for cleaner tracing.</div>
+              </div>
+            </details>
+          </div>
         </aside>
 
         <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -395,7 +448,6 @@
         const $ = (selector) => document.querySelector(selector);
         const ref = $('#reference');
         const draw = $('#drawing');
-        const stage = $('#stage');
         const ws = $('#workspace');
         const refCtx = ref.getContext('2d');
         const ctx = draw.getContext('2d');
@@ -406,13 +458,11 @@
         let baseScale = 1;
         let active = false;
         let moving = false;
-        let start = null;
         let history = [];
         let redoStack = [];
         let pointerMap = new Map();
         let currentGuide = null;
-        let ghostTimer = null;
-        let keepAwake = false;
+        let aiMode = 'enhance';
 
         const MIN_SCALE = 0.2;
         const MAX_SCALE = 8;
@@ -427,6 +477,23 @@
 
         function currentScale() {
           return zoom * baseScale;
+        }
+
+        function setAiMode(mode) {
+          aiMode = mode;
+          document.querySelectorAll('.mini-btn').forEach((btn) => {
+            btn.classList.toggle('active', btn.dataset.aiMode === mode);
+          });
+
+          const hints = {
+            enhance: 'AI is helping sharpen contrast and simplify the reference for cleaner tracing.',
+            outline: 'AI outline mode is emphasizing shapes to make the subject easier to trace.',
+            focus: 'AI focus mode is boosting subject clarity while softening distractions.',
+            clean: 'AI clean mode is reducing noise and smoothing the image for a cleaner reference.'
+          };
+
+          $('#aiHint').textContent = hints[mode] || hints.enhance;
+          drawReference();
         }
 
         function saveLocal() {
@@ -533,8 +600,57 @@
           autosave();
         }
 
+        function buildAiReferenceCanvas() {
+          if (!image) return null;
+
+          const canvas = document.createElement('canvas');
+          canvas.width = ref.width;
+          canvas.height = ref.height;
+          const x = canvas.getContext('2d');
+          x.filter = 'contrast(1.35) saturate(1.2) brightness(1.04)';
+          x.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+          const imageData = x.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+
+            if (aiMode === 'outline') {
+              const edge = brightness > 160 ? 255 : 0;
+              data[i] = edge;
+              data[i + 1] = edge;
+              data[i + 2] = edge;
+              data[i + 3] = 255;
+            } else if (aiMode === 'focus') {
+              const centerX = canvas.width / 2;
+              const centerY = canvas.height / 2;
+              const dx = Math.abs((i / 4) % canvas.width - centerX) / centerX;
+              const dy = Math.abs(Math.floor((i / 4) / canvas.width) - centerY) / centerY;
+              const fade = Math.max(0.55, 1 - (dx + dy) * 0.7);
+              data[i] = Math.min(255, r * fade + 20);
+              data[i + 1] = Math.min(255, g * fade + 12);
+              data[i + 2] = Math.min(255, b * fade + 15);
+            } else if (aiMode === 'clean') {
+              const soften = brightness > 200 ? 230 : brightness;
+              data[i] = soften;
+              data[i + 1] = soften;
+              data[i + 2] = soften;
+            }
+          }
+
+          x.putImageData(imageData, 0, 0);
+          return canvas;
+        }
+
         function processedReference() {
           if (!image) return null;
+          const base = buildAiReferenceCanvas();
+          if (!base) return null;
+
           const canvas = document.createElement('canvas');
           canvas.width = ref.width;
           canvas.height = ref.height;
@@ -545,7 +661,7 @@
             x.translate(canvas.width, 0);
             x.scale(-1, 1);
           }
-          x.drawImage(image, 0, 0, canvas.width, canvas.height);
+          x.drawImage(base, 0, 0, canvas.width, canvas.height);
           x.restore();
           return canvas;
         }
@@ -624,7 +740,6 @@
         function handlePointerDown(e) {
           pointerMap.set(e.pointerId, { x: e.clientX, y: e.clientY });
           const pos = pointFromEvent(e);
-          start = pos;
           active = true;
           moving = false;
 
@@ -784,6 +899,10 @@
             setZoom(value);
           });
 
+          document.querySelectorAll('.mini-btn').forEach((btn) => {
+            btn.addEventListener('click', () => setAiMode(btn.dataset.aiMode));
+          });
+
           $('#fitBtn').addEventListener('click', fitImageToStage);
           $('#saveBtn').addEventListener('click', exportPNG);
           $('#undo').addEventListener('click', handleUndo);
@@ -811,6 +930,7 @@
           $('#undo').disabled = true;
           $('#redo').disabled = true;
           currentGuide = { x: draw.width / 2, y: draw.height / 2 };
+          setAiMode('enhance');
           drawReference();
         }
 
