@@ -1,46 +1,821 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101827">
-<title>Tracing Canvas Studio</title>
-<style>
-:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#172033;background:#eef2f8}*{box-sizing:border-box}html,body{height:100%;margin:0}body{overflow:hidden}.app{height:100%;height:100dvh;display:flex;flex-direction:column}header{z-index:3;background:#101827;color:#fff;padding:9px 12px;box-shadow:0 4px 16px #1113}.top,.toolbar,.group,.footer{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.top{justify-content:space-between;margin-bottom:7px}.brand{font-weight:750}.hint{font-size:.77rem;color:#c5d0e0}.toolbar{justify-content:center}.group{padding:5px 8px;border:1px solid #ffffff24;border-radius:10px;background:#ffffff0b}label{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;white-space:nowrap}input[type=range]{width:90px;accent-color:#72a2ff}input[type=number]{width:82px;padding:5px;border:0;border-radius:6px}input[type=color]{height:28px;width:30px;padding:0;border:0;background:transparent}input[type=checkbox]{accent-color:#3978f6}button,select{min-height:36px;padding:7px 10px;border:0;border-radius:8px;background:#3978f6;color:#fff;font:inherit;font-size:.8rem;font-weight:650;cursor:pointer;touch-action:manipulation}button.secondary,select{background:#e8edf5;color:#182235}button.active{background:#f3b73f;color:#172033}button:disabled{opacity:.5}#workspace{position:relative;display:flex;flex:1;min-height:0;overflow:auto;align-items:center;justify-content:center;touch-action:pan-x pan-y;background:#f8fafc radial-gradient(#9aa8bb35 1px,transparent 1px);background-size:18px 18px}#workspace.dragging{background-color:#e8f0ff;outline:3px dashed #3978f6;outline-offset:-8px}#workspace.dragging::after{content:"Release to open";position:fixed;z-index:10;top:50%;left:50%;transform:translate(-50%,-50%);background:#101827;color:white;padding:14px 22px;border-radius:12px;font-weight:700;pointer-events:none}#stage{position:relative;flex:none;margin:auto}canvas.layer{position:absolute;left:50%;top:50%;max-width:none;max-height:none;transform:translate(-50%,-50%) scale(var(--scale,1));transform-origin:center center;touch-action:none;user-select:none;-webkit-user-select:none}#reference{box-shadow:0 10px 35px #18223526}#drawing{cursor:crosshair}.featurePanel{display:none;align-items:flex-start;gap:8px;flex-wrap:wrap;max-height:30vh;overflow:auto;padding:7px 2px 2px;border-top:1px solid #ffffff25;margin-top:7px}.featurePanel.open{display:flex}.featurePanel details{min-width:170px;border:1px solid #ffffff2a;border-radius:9px;padding:6px 8px;background:#ffffff0a}.featurePanel summary{cursor:pointer;font-size:.78rem;font-weight:700}.featurePanel .items{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}.featurePanel label{font-size:.75rem;color:#eff4fc}.zoom{position:sticky;bottom:8px;display:flex;align-items:center;gap:5px;width:max-content;margin:-48px 8px 8px auto;padding:5px;border:1px solid #dce3ee;border-radius:10px;background:#fffe;box-shadow:0 4px 14px #1720331a;z-index:2}.zoom span{min-width:52px;text-align:center;font-size:.78rem;font-weight:700}.footer{justify-content:space-between;background:#fff;border-top:1px solid #dfe5ee;color:#4b5870;padding:7px 11px;font-size:.76rem}.status{font-weight:650}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}@media(max-width:900px){header{padding:7px}.toolbar{gap:5px}.group{padding:4px 6px}label{font-size:.72rem}input[type=range]{width:67px}.hint{display:none}}@media(max-width:560px){.top{justify-content:center}.brand{text-align:center;width:100%}.toolbar{max-height:28vh;overflow:auto;justify-content:center}.group{justify-content:center}.footer{justify-content:center;text-align:center}.footer .tip{display:none}}
-</style>
-</head>
-<body><main class="app">
-<header><div class="top"><div class="brand">✏️ Tracing Canvas Studio</div><div class="hint">Your session autosaves on this device</div><button id="featuresBtn" type="button">More tools</button></div>
-<div class="toolbar">
-<div class="group"><button id="upload" class="secondary" type="button">Add picture</button><label>Tool <select id="tool"><option value="pencil">Pencil</option><option value="eraser">Eraser</option><option value="line">Line</option><option value="rectangle">Rectangle</option><option value="ellipse">Ellipse</option></select></label><label>Color <input id="color" type="color" value="#172033"></label><label>Brush <input id="brush" type="range" min="1" max="40" value="4"><span id="brushValue">4</span></label></div>
-<div class="group"><label>Reference scale <input id="scaleNumber" type="number" min="10" max="3000" step="10" value="100" aria-label="Custom reference scale percentage">%</label><input id="scaleRange" type="range" min="25" max="500" step="5" value="100" aria-label="Reference scale slider"><button id="fit" class="secondary" type="button">Fit</button></div>
-<div class="group"><label>Image <input id="opacity" type="range" min="0" max="1" step=".01" value=".7"></label><label>Contrast <input id="contrast" type="range" min=".5" max="2.5" step=".05" value="1"></label><label>Light <input id="light" type="range" min=".5" max="2" step=".05" value="1"></label><label><input id="autoLight" type="checkbox" checked> Auto light</label></div>
-<div class="group"><button id="undo" class="secondary" disabled>Undo</button><button id="redo" class="secondary" disabled>Redo</button><button id="clear" class="secondary">Clear</button><button id="save" class="secondary">Save PNG</button><button id="move" class="secondary">Move</button><button id="fullscreen" class="secondary">Fullscreen</button><button id="wake">Keep screen on</button></div>
-</div>
-<div id="featurePanel" class="featurePanel"><details open><summary>Reference effects</summary><div class="items"><label><input id="edge" type="checkbox"> Edge tracing</label><label><input id="pencilMode" type="checkbox"> Pencil-friendly</label><label><input id="ghost" type="checkbox"> Ghost pulse</label><label><input id="mirror" type="checkbox"> Mirror reference</label><label><input id="stencil" type="checkbox"> Stencil</label><label><input id="easier" type="checkbox"> Boost visibility</label></div></details><details><summary>Guides &amp; practice</summary><div class="items"><label><input id="grid" type="checkbox"> Grid</label><label><input id="symmetry" type="checkbox"> Mirror strokes</label><label>Radial copies <input id="radial" type="number" min="1" max="24" value="1"></label><label><input id="crosshair" type="checkbox"> Crosshair</label><label><input id="touchToggle" type="checkbox" checked> Touch draw</label><button id="coach" class="secondary">Drawing tip</button></div></details><details><summary>Export</summary><div class="items"><button id="saveImage" class="secondary">Image + drawing</button><button id="saveOverlay" class="secondary">Transparent drawing</button><button id="print" class="secondary">Print</button></div></details></div></header>
-<section id="workspace" aria-label="Tracing workspace"><div id="stage"><canvas id="reference" class="layer"></canvas><canvas id="drawing" class="layer" tabindex="0" aria-label="Drawing surface"></canvas></div><input id="file" class="sr" type="file" accept="image/*"></section><div class="zoom"><button id="zoomOut" class="secondary" aria-label="Zoom out">−</button><span id="zoomLabel">100%</span><button id="zoomIn" class="secondary" aria-label="Zoom in">+</button></div><footer class="footer"><span class="tip">Pinch or Ctrl+wheel to zoom · Move to pan · scale can be typed directly</span><span id="status" class="status" role="status" aria-live="polite">Ready</span></footer></main>
-<script>
-(()=>{
-const $=s=>document.querySelector(s),ref=$('#reference'),draw=$('#drawing'),stage=$('#stage'),ws=$('#workspace'),rctx=ref.getContext('2d'),ctx=draw.getContext('2d');
-let image=null,sourceData=null,zoom=1,baseScale=1,active=false,moving=false,panMode=false,start=null,snapshot=null,pointers=new Map(),pinch=null,history=[],redoStack=[],wakeLock=null,keepAwake=false,ambientSensor=null,lightFactor=1,ghostTimer=null,ghostPhase=0,guidePoint=null;const MIN_SCALE=.1,MAX_SCALE=30,status=$('#status');function say(s){status.textContent=s}function fittedScale(img){return Math.min((ws.clientWidth-40)/img.width,(ws.clientHeight-40)/img.height,1.5)}function currentScale(){return baseScale*zoom}function updateStage(){let s=currentScale();stage.style.width=Math.max(1,draw.width*s)+'px';stage.style.height=Math.max(1,draw.height*s)+'px';stage.style.setProperty('--scale',s);$('#zoomLabel').textContent=Math.round(zoom*100)+'%';$('#scaleNumber').value=Math.round(zoom*100);$('#scaleRange').value=Math.max(25,Math.min(500,Math.round(zoom*100)))}
-function saveLocal(){try{localStorage.setItem('doodle-session',JSON.stringify({image:sourceData,w:draw.width,h:draw.height,drawing:draw.toDataURL(),zoom,settings:{opacity:$('#opacity').value,contrast:$('#contrast').value,light:$('#light').value,autoLight:$('#autoLight').checked}}))}catch(_){say('Autosave is full—save a PNG to protect your work.')}}let saveTimer;function autosave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveLocal,450)}
-function resize(w,h,preserve=true){let old=null;if(preserve&&draw.width){old=document.createElement('canvas');old.width=draw.width;old.height=draw.height;old.getContext('2d').drawImage(draw,0,0)}for(const c of [ref,draw]){c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));c.style.width=c.width+'px';c.style.height=c.height+'px'}if(old)ctx.drawImage(old,0,0,old.width,old.height,0,0,draw.width,draw.height);updateStage();drawReference();history=[];redoStack=[];pushHistory()}
-function processedReference(){let c=document.createElement('canvas');c.width=ref.width;c.height=ref.height;let x=c.getContext('2d');x.save();if($('#mirror').checked){x.translate(c.width,0);x.scale(-1,1)}x.filter=`contrast(${$('#contrast').value}) brightness(${lightFactor*($('#pencilMode').checked?1.25:1)*($('#easier').checked?1.15:1)}) saturate(${($('#pencilMode').checked||$('#easier').checked)?'.4':'1'})`;x.drawImage(image,0,0,c.width,c.height);x.restore();if($('#edge').checked||$('#stencil').checked){let im=x.getImageData(0,0,c.width,c.height),d=im.data,orig=new Uint8ClampedArray(d),w=c.width,h=c.height;for(let y=0;y<h;y++)for(let xx=0;xx<w;xx++){let i=(y*w+xx)*4,g=.299*orig[i]+.587*orig[i+1]+.114*orig[i+2],v;if($('#stencil').checked)v=g<145?0:255;else{let ir=(y*w+Math.min(w-1,xx+1))*4,ib=(Math.min(h-1,y+1)*w+xx)*4,gr=.299*orig[ir]+.587*orig[ir+1]+.114*orig[ir+2],gb=.299*orig[ib]+.587*orig[ib+1]+.114*orig[ib+2];v=Math.abs(g-gr)+Math.abs(g-gb)>34?25:255}d[i]=d[i+1]=d[i+2]=v}x.putImageData(im,0,0)}return c}
-function drawReference(){rctx.clearRect(0,0,ref.width,ref.height);if(!image)return;let c=processedReference();rctx.globalAlpha=Number($('#opacity').value);rctx.drawImage(c,0,0);rctx.globalAlpha=1;if($('#ghost').checked)ref.style.opacity=String(.5+.5*(Math.sin(ghostPhase)+1)/2);else ref.style.opacity='1';if($('#crosshair').checked&&guidePoint){rctx.save();rctx.strokeStyle='#e44747aa';rctx.setLineDash([6,5]);rctx.beginPath();rctx.moveTo(guidePoint.x,0);rctx.lineTo(guidePoint.x,ref.height);rctx.moveTo(0,guidePoint.y);rctx.lineTo(ref.width,guidePoint.y);rctx.stroke();rctx.restore()}}
-function fit(){if(!image)return;baseScale=fittedScale(image);zoom=1;updateStage();ws.scrollTo(0,0);autosave();say('Picture fitted to workspace')}
-function load(file){if(!file||!file.type.startsWith('image/')){say('That item is not a supported image file. Try Add picture or drop an image file.');return}const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{image=im;sourceData=fr.result;baseScale=fittedScale(im);resize(im.width,im.height,false);zoom=1;updateStage();say('Picture loaded—set a custom scale above');autosave()};im.onerror=()=>say('Could not decode that image. Try PNG, JPEG, GIF, or WebP.');im.src=fr.result};fr.onerror=()=>say('The dropped file could not be read.');fr.readAsDataURL(file)}
-function loadImageUrl(url){try{let parsed=new URL(url,location.href);if(!['http:','https:','blob:','data:'].includes(parsed.protocol)){say('For safety, only image links can be opened.');return}const im=new Image();im.onload=()=>{image=im;sourceData=typeof url==='string'&&url.startsWith('data:')?url:im.src;baseScale=fittedScale(im);resize(im.width,im.height,false);zoom=1;updateStage();say('Linked image loaded');autosave()};im.onerror=()=>{say('Could not load that link as an image. The site may block external image access; download it and drop the file instead.');};im.src=parsed.href}catch(_){say('That does not look like a valid image link.')}}
-function handleDrop(e){e.preventDefault();ws.classList.remove('dragging');const dt=e.dataTransfer;if(!dt)return;let files=[...(dt.files||[])];let imageFile=files.find(f=>f.type.startsWith('image/'));if(imageFile){load(imageFile);return}let uri=dt.getData('text/uri-list').split(/\r?\n/).find(s=>s&&!s.startsWith('#'));if(uri){loadImageUrl(uri.trim());return}let html=dt.getData('text/html');if(html){let doc=new DOMParser().parseFromString(html,'text/html'),src=doc.querySelector('img')?.src;if(src){loadImageUrl(src);return}}let text=dt.getData('text/plain').trim();if(text){let match=text.match(/https?:\/\/[^\s"'<>]+/i);if(match){loadImageUrl(match[0]);return}}if(files.length){say('Dropped item is not an image. Try an image file, image link, or use Add picture.')}else say('Could not read that drop. Try Add picture, or drop an image file/link.')}
-function setZoom(value,anchorX=ws.clientWidth/2,anchorY=ws.clientHeight/2){let old=currentScale(),newZoom=Math.max(MIN_SCALE,Math.min(MAX_SCALE,baseScale*value))/baseScale,x=(ws.scrollLeft+anchorX)/old,y=(ws.scrollTop+anchorY)/old;zoom=newZoom;updateStage();let s=currentScale();ws.scrollLeft=Math.max(0,x*s-anchorX);ws.scrollTop=Math.max(0,y*s-anchorY);autosave()}
-function point(e){let r=draw.getBoundingClientRect();return{x:(e.clientX-r.left)*draw.width/r.width,y:(e.clientY-r.top)*draw.height/r.height}}function pushHistory(){try{history.push(ctx.getImageData(0,0,draw.width,draw.height));if(history.length>15)history.shift();redoStack=[];buttons()}catch(_){}}function buttons(){$('#undo').disabled=history.length<2;$('#redo').disabled=!redoStack.length}function undo(){if(history.length<2)return;redoStack.push(history.pop());ctx.putImageData(history.at(-1),0,0);buttons();autosave()}function redo(){if(!redoStack.length)return;history.push(redoStack.pop());ctx.putImageData(history.at(-1),0,0);buttons();autosave()}
-function down(e){pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(e.pointerType==='touch'&&!$('#touchToggle').checked)return;if(pointers.size===2){active=false;let p=[...pointers.values()];pinch={d:Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y),zoom};return}draw.setPointerCapture(e.pointerId);if(panMode||e.button===1||e.shiftKey){moving=true;start={x:e.clientX,y:e.clientY};return}active=true;start=point(e);snapshot=ctx.getImageData(0,0,draw.width,draw.height);ctx.beginPath();ctx.lineCap=ctx.lineJoin='round';ctx.lineWidth=Number($('#brush').value);ctx.strokeStyle=$('#tool').value==='eraser'?'#ffffff':$('#color').value;if(['pencil','eraser'].includes($('#tool').value)){ctx.moveTo(start.x,start.y);ctx.lineTo(start.x+.01,start.y+.01);ctx.stroke()}e.preventDefault()}
-function move(e){if(pointers.has(e.pointerId))pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if($('#crosshair').checked){guidePoint=point(e);drawReference()}if(pinch&&pointers.size>=2){let p=[...pointers.values()],d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y),r=ws.getBoundingClientRect();setZoom(pinch.zoom*d/pinch.d,(p[0].x+p[1].x)/2-r.left,(p[0].y+p[1].y)/2-r.top);return}if(moving){ws.scrollLeft-=e.clientX-start.x;ws.scrollTop-=e.clientY-start.y;start={x:e.clientX,y:e.clientY};return}if(!active)return;let p=point(e),t=$('#tool').value;if(['pencil','eraser'].includes(t)){ctx.strokeStyle=t==='eraser'?'#ffffff':$('#color').value;ctx.lineTo(p.x,p.y);ctx.stroke()}else{ctx.putImageData(snapshot,0,0);ctx.save();ctx.strokeStyle=$('#color').value;ctx.lineWidth=Number($('#brush').value);ctx.beginPath();if(t==='line'){ctx.moveTo(start.x,start.y);ctx.lineTo(p.x,p.y)}else if(t==='rectangle')ctx.rect(start.x,start.y,p.x-start.x,p.y-start.y);else ctx.ellipse((start.x+p.x)/2,(start.y+p.y)/2,Math.abs(p.x-start.x)/2,Math.abs(p.y-start.y)/2,0,0,Math.PI*2);ctx.stroke();ctx.restore()}e.preventDefault()}
-function up(e){pointers.delete(e.pointerId);if(pinch){pinch=null;return}if(active){active=false;pushHistory();autosave()}moving=false;if(draw.hasPointerCapture(e.pointerId))draw.releasePointerCapture(e.pointerId)}draw.addEventListener('pointerdown',down);draw.addEventListener('pointermove',move);draw.addEventListener('pointerup',up);draw.addEventListener('pointercancel',up);
-function exportPNG(withImage=true){let c=document.createElement('canvas');c.width=draw.width;c.height=draw.height;let x=c.getContext('2d');if(withImage&&image)x.drawImage(image,0,0,c.width,c.height);x.drawImage(draw,0,0);let a=document.createElement('a');a.href=c.toDataURL('image/png');a.download=withImage?'tracing.png':'tracing-overlay.png';a.click()}
-function setupAmbient(){if(!$('#autoLight').checked)return;if('AmbientLightSensor'in window){try{ambientSensor=new AmbientLightSensor({frequency:1});ambientSensor.addEventListener('reading',()=>{let lux=ambientSensor.illuminance;lightFactor=lux<15?1.6:lux<60?1.35:lux<150?1.15:1;drawReference()});ambientSensor.start();return}catch(_){}}lightFactor=matchMedia('(prefers-color-scheme: dark)').matches?1.25:1;drawReference()}
-$('#upload').onclick=()=>$('#file').click();$('#file').onchange=e=>load(e.target.files[0]);ws.addEventListener('dragenter',e=>{e.preventDefault();ws.classList.add('dragging')});ws.addEventListener('dragover',e=>{e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='copy';ws.classList.add('dragging')});ws.addEventListener('dragleave',e=>{if(!ws.contains(e.relatedTarget))ws.classList.remove('dragging')});ws.addEventListener('drop',handleDrop);document.addEventListener('dragover',e=>{if(e.dataTransfer?.types?.includes('Files'))e.preventDefault()});document.addEventListener('drop',e=>{if(!ws.contains(e.target)&&e.dataTransfer?.types?.includes('Files'))e.preventDefault()});
-$('#scaleNumber').onchange=()=>setZoom(Number($('#scaleNumber').value)/100);$('#scaleNumber').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();setZoom(Number(e.target.value)/100);e.target.blur()}};$('#scaleRange').oninput=e=>setZoom(Number(e.target.value)/100);$('#fit').onclick=fit;$('#zoomIn').onclick=()=>setZoom(zoom*1.25);$('#zoomOut').onclick=()=>setZoom(zoom/1.25);ws.addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey){e.preventDefault();let r=ws.getBoundingClientRect();setZoom(zoom*(e.deltaY<0?1.12:.89),e.clientX-r.left,e.clientY-r.top)}},{passive:false});$('#opacity').oninput=()=>{drawReference();autosave()};$('#contrast').oninput=()=>{drawReference();autosave()};$('#light').oninput=()=>{if(!$('#autoLight').checked){lightFactor=Number($('#light').value);drawReference()}autosave()};$('#autoLight').onchange=()=>{if($('#autoLight').checked)setupAmbient();else{if(ambientSensor){try{ambientSensor.stop()}catch(_){}ambientSensor=null}lightFactor=Number($('#light').value);drawReference()}};$('#brush').oninput=()=>$('#brushValue').textContent=$('#brush').value;
-['edge','pencilMode','mirror','stencil','easier'].forEach(id=>$('#'+id).onchange=()=>{drawReference();autosave()});$('#ghost').onchange=()=>{clearInterval(ghostTimer);if($('#ghost').checked)ghostTimer=setInterval(()=>{ghostPhase+=.12;drawReference()},60);else drawReference()};$('#grid').onchange=()=>ws.classList.toggle('grid',$('#grid').checked);$('#crosshair').onchange=()=>drawReference();$('#undo').onclick=undo;$('#redo').onclick=redo;$('#clear').onclick=()=>{if(confirm('Clear your drawing? You can undo this.')){ctx.clearRect(0,0,draw.width,draw.height);pushHistory();autosave()}};$('#save').onclick=()=>exportPNG(true);$('#saveImage').onclick=()=>exportPNG(true);$('#saveOverlay').onclick=()=>exportPNG(false);$('#print').onclick=()=>window.print();$('#move').onclick=e=>{panMode=!panMode;e.currentTarget.classList.toggle('active',panMode);e.currentTarget.textContent=panMode?'Move: on':'Move'};$('#featuresBtn').onclick=()=>$('#featurePanel').classList.toggle('open');$('#coach').onclick=()=>say('Start with the large outline, then check proportions and smaller details.');$('#fullscreen').onclick=async()=>{try{document.fullscreenElement?await document.exitFullscreen():await document.documentElement.requestFullscreen()}catch(_){say('Fullscreen is unavailable')}};
-async function requestWake(){if(keepAwake&&navigator.wakeLock&&document.visibilityState==='visible')try{wakeLock=await navigator.wakeLock.request('screen')}catch(_){say('Use your device display timeout if screen lock is unavailable')}}$('#wake').onclick=async e=>{keepAwake=!keepAwake;e.currentTarget.classList.toggle('active',keepAwake);e.currentTarget.textContent=keepAwake?'Screen on: On':'Keep screen on';if(keepAwake)requestWake();else if(wakeLock){await wakeLock.release();wakeLock=null}};document.addEventListener('visibilitychange',requestWake);document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo()}else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo()}});window.addEventListener('resize',()=>{if(image){baseScale=fittedScale(image);updateStage()}});
-function restore(){try{let s=JSON.parse(localStorage.getItem('doodle-session')||'null');if(!s)return;if(s.settings){$('#opacity').value=s.settings.opacity||.7;$('#contrast').value=s.settings.contrast||1;$('#light').value=s.settings.light||1;$('#autoLight').checked=s.settings.autoLight!==false}const finish=()=>{if(s.w&&s.h)resize(s.w,s.h,false);if(s.drawing){let d=new Image();d.onload=()=>{ctx.drawImage(d,0,0,draw.width,draw.height);history=[];pushHistory();zoom=s.zoom||1;updateStage();drawReference();say('Your last session was restored')};d.src=s.drawing}};if(s.image){let im=new Image();im.onload=()=>{image=im;sourceData=s.image;baseScale=fittedScale(im);finish()};im.src=s.image}else finish()}catch(_){}}
-resize(Math.max(240,Math.min(1000,ws.clientWidth-30)),Math.max(180,Math.min(700,ws.clientHeight-30)),false);setupAmbient();restore();
-})();
-</script></body></html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <title>Project Bob</title>
+    <style>
+      :root {
+        --bg: #edf3ff;
+        --bg-strong: #dfe9ff;
+        --panel: rgba(15, 23, 42, 0.85);
+        --panel-soft: rgba(255, 255, 255, 0.72);
+        --panel-border: rgba(148, 163, 184, 0.35);
+        --text: #0f172a;
+        --text-soft: #475569;
+        --primary: #4f46e5;
+        --primary-strong: #4338ca;
+        --accent: #14b8a6;
+        --accent-soft: #b8f7ef;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --shadow: 0 18px 35px rgba(15, 23, 42, 0.12);
+        --radius: 18px;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        height: 100%;
+        margin: 0;
+        font-family: Inter, "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(79, 70, 229, 0.10), transparent 28%),
+          linear-gradient(180deg, var(--bg), #f8fbff 45%, var(--bg-strong));
+        color: var(--text);
+      }
+
+      body {
+        overflow: hidden;
+      }
+
+      .app {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px 14px 10px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: var(--radius);
+        background: rgba(15, 23, 42, 0.9);
+        color: white;
+        box-shadow: var(--shadow);
+      }
+
+      .brand-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #8b5cf6, var(--primary));
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.28);
+        font-size: 20px;
+      }
+
+      .brand-title {
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        font-size: clamp(1.1rem, 2vw, 1.5rem);
+      }
+
+      .brand-sub {
+        color: rgba(255,255,255,0.72);
+        font-size: 0.78rem;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border: 1px solid var(--panel-border);
+        border-radius: var(--radius);
+        background: rgba(255,255,255,0.56);
+        backdrop-filter: blur(14px);
+        box-shadow: 0 10px 24px rgba(15,23,42,0.08);
+      }
+
+      .toolbar-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .tool-btn,
+      .secondary-btn,
+      .primary-btn,
+      select,
+      input[type="number"],
+      input[type="range"] {
+        font: inherit;
+      }
+
+      .tool-btn,
+      .secondary-btn,
+      .primary-btn {
+        border: none;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.15s ease, filter 0.15s ease;
+      }
+
+      .tool-btn:hover,
+      .secondary-btn:hover,
+      .primary-btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .primary-btn {
+        background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+        color: white;
+        box-shadow: 0 10px 18px rgba(79, 70, 229, 0.22);
+      }
+
+      .secondary-btn {
+        background: rgba(15, 23, 42, 0.05);
+        color: var(--text);
+        border: 1px solid rgba(15,23,42,0.08);
+      }
+
+      .secondary-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .control {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.42);
+        border: 1px solid rgba(148,163,184,0.22);
+        color: var(--text-soft);
+      }
+
+      .control label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-soft);
+      }
+
+      select,
+      input[type="number"] {
+        border: 1px solid rgba(148,163,184,0.4);
+        border-radius: 10px;
+        background: white;
+        color: var(--text);
+        padding: 8px 10px;
+      }
+
+      input[type="range"] {
+        accent-color: var(--primary);
+      }
+
+      .workspace-shell {
+        position: relative;
+        flex: 1;
+        min-height: 260px;
+        background: rgba(15, 23, 42, 0.06);
+        border-radius: 20px;
+        border: 1px solid rgba(148,163,184,0.22);
+        overflow: hidden;
+      }
+
+      #workspace {
+        position: absolute;
+        inset: 0;
+        overflow: auto;
+        background:
+          linear-gradient(90deg, rgba(148,163,184,0.08) 1px, transparent 1px),
+          linear-gradient(rgba(148,163,184,0.08) 1px, transparent 1px),
+          linear-gradient(180deg, rgba(255,255,255,0.2), rgba(203,213,225,0.14));
+        background-size: 24px 24px, 24px 24px, 100% 100%;
+      }
+
+      #stage {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        min-width: 260px;
+        min-height: 240px;
+      }
+
+      .layer {
+        display: block;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 18px;
+        box-shadow: 0 24px 40px rgba(15, 23, 42, 0.18);
+        background: rgba(255,255,255,0.35);
+      }
+
+      #reference {
+        border: 1px solid rgba(15,23,42,0.09);
+      }
+
+      #drawing {
+        border: 1px solid rgba(15,23,42,0.12);
+        cursor: crosshair;
+      }
+
+      .feature-panel {
+        position: absolute;
+        right: 16px;
+        top: 16px;
+        width: min(260px, calc(100% - 32px));
+        padding: 14px 12px 8px;
+        border-radius: 14px;
+        border: 1px solid rgba(15,23,42,0.1);
+        background: rgba(255,255,255,0.7);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 18px 22px rgba(15, 23, 42, 0.08);
+      }
+
+      .feature-panel summary {
+        padding: 6px 6px 8px;
+        font-weight: 700;
+        color: var(--text);
+        cursor: pointer;
+        list-style: none;
+      }
+
+      .feature-panel summary::-webkit-details-marker { display: none; }
+
+      .feature-list {
+        display: grid;
+        gap: 8px;
+        padding: 0 4px 4px;
+      }
+
+      .check-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-soft);
+        font-weight: 600;
+      }
+
+      .toast {
+        position: absolute;
+        left: 50%;
+        bottom: 20px;
+        transform: translateX(-50%) translateY(18px);
+        background: rgba(15,23,42,0.9);
+        color: white;
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      @media (max-width: 700px) {
+        .app {
+          padding: 10px 10px 8px;
+        }
+
+        .toolbar {
+          gap: 8px;
+          justify-content: flex-start;
+          padding: 10px;
+        }
+
+        .topbar {
+          padding: 10px 12px;
+        }
+
+        .brand-sub {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div class="brand-wrap">
+          <div class="brand-mark" aria-hidden="true">✏️</div>
+          <div>
+            <div class="brand-title">Project Bob</div>
+            <div class="brand-sub">A cleaner tracing studio for creative work</div>
+          </div>
+        </div>
+        <button id="saveBtn" class="primary-btn" type="button">Save PNG</button>
+      </header>
+
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <button id="upload" class="tool-btn primary-btn" type="button">Add picture</button>
+          <input id="file" type="file" accept="image/*" hidden />
+
+          <label class="control" for="tool">
+            <span>Tool</span>
+            <select id="tool">
+              <option value="pencil">Pencil</option>
+              <option value="eraser">Eraser</option>
+            </select>
+          </label>
+
+          <label class="control" for="strokeWidth">
+            <span>Stroke</span>
+            <input id="strokeWidth" type="range" min="1" max="20" value="4" />
+          </label>
+        </div>
+
+        <div class="toolbar-group">
+          <label class="control" for="scaleNumber">
+            <span>Scale</span>
+            <input id="scaleNumber" type="number" min="10" max="3000" step="10" value="100" />
+            <span>%</span>
+          </label>
+
+          <label class="control" for="opacity">
+            <span>Image</span>
+            <input id="opacity" type="range" min="0" max="1" step="0.01" value="0.7" />
+          </label>
+
+          <label class="control" for="contrast">
+            <span>Contrast</span>
+            <input id="contrast" type="range" min="0.5" max="2.5" step="0.05" value="1.2" />
+          </label>
+        </div>
+
+        <div class="toolbar-group">
+          <button id="fitBtn" class="secondary-btn" type="button">Fit</button>
+          <button id="undo" class="secondary-btn" type="button" disabled>Undo</button>
+          <button id="redo" class="secondary-btn" type="button" disabled>Redo</button>
+          <button id="clear" class="secondary-btn" type="button">Clear</button>
+        </div>
+      </div>
+
+      <div id="workspace" class="workspace-shell" aria-label="Project Bob tracing workspace">
+        <div id="stage">
+          <canvas id="reference" class="layer" aria-label="Reference image layer"></canvas>
+          <canvas id="drawing" class="layer" tabindex="0" aria-label="Drawing layer"></canvas>
+        </div>
+
+        <aside id="featurePanel" class="feature-panel">
+          <details open>
+            <summary>Reference tools</summary>
+            <div class="feature-list">
+              <label class="check-item"><input id="edge" type="checkbox" /> Edge tracing</label>
+              <label class="check-item"><input id="mirror" type="checkbox" /> Mirror</label>
+              <label class="check-item"><input id="stencil" type="checkbox" /> Stencil</label>
+              <label class="check-item"><input id="ghost" type="checkbox" /> Ghost guide</label>
+              <label class="check-item"><input id="crosshair" type="checkbox" /> Crosshair</label>
+            </div>
+          </details>
+        </aside>
+
+        <div id="toast" class="toast" role="status" aria-live="polite"></div>
+      </div>
+    </main>
+
+    <script>
+      (() => {
+        const $ = (selector) => document.querySelector(selector);
+        const ref = $('#reference');
+        const draw = $('#drawing');
+        const stage = $('#stage');
+        const ws = $('#workspace');
+        const refCtx = ref.getContext('2d');
+        const ctx = draw.getContext('2d');
+
+        let image = null;
+        let sourceData = '';
+        let zoom = 1;
+        let baseScale = 1;
+        let active = false;
+        let moving = false;
+        let start = null;
+        let history = [];
+        let redoStack = [];
+        let pointerMap = new Map();
+        let currentGuide = null;
+        let ghostTimer = null;
+        let keepAwake = false;
+
+        const MIN_SCALE = 0.2;
+        const MAX_SCALE = 8;
+
+        function say(message) {
+          const toast = $('#toast');
+          toast.textContent = message;
+          toast.classList.add('show');
+          clearTimeout(say.timer);
+          say.timer = setTimeout(() => toast.classList.remove('show'), 1800);
+        }
+
+        function currentScale() {
+          return zoom * baseScale;
+        }
+
+        function saveLocal() {
+          try {
+            const data = {
+              image: sourceData,
+              zoom,
+              opacity: $('#opacity').value,
+              contrast: $('#contrast').value,
+              drawing: draw.toDataURL('image/png')
+            };
+            localStorage.setItem('project-bob-session', JSON.stringify(data));
+          } catch (error) {
+            console.warn('Could not save to localStorage', error);
+          }
+        }
+
+        function autosave() {
+          saveLocal();
+        }
+
+        function pointFromEvent(e) {
+          const rect = draw.getBoundingClientRect();
+          return {
+            x: (e.clientX - rect.left) * (draw.width / rect.width),
+            y: (e.clientY - rect.top) * (draw.height / rect.height)
+          };
+        }
+
+        function pushHistory() {
+          try {
+            history.push(ctx.getImageData(0, 0, draw.width, draw.height));
+            if (history.length > 24) history.shift();
+            redoStack = [];
+            $('#undo').disabled = history.length === 0;
+            $('#redo').disabled = true;
+          } catch (error) {
+            console.warn('Could not save drawing history', error);
+          }
+        }
+
+        function restoreHistory(snapshot) {
+          if (!snapshot) return;
+          ctx.putImageData(snapshot, 0, 0);
+        }
+
+        function clearCanvas() {
+          pushHistory();
+          ctx.clearRect(0, 0, draw.width, draw.height);
+          autosave();
+          say('Canvas cleared');
+        }
+
+        function fitImageToStage() {
+          if (!image) return;
+          const maxW = ws.clientWidth * 0.9;
+          const maxH = ws.clientHeight * 0.8;
+          const scale = Math.min(maxW / image.width, maxH / image.height, 1.8);
+          baseScale = scale;
+          zoom = 1;
+          updateStage();
+          ws.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+          autosave();
+          say('Picture fitted to workspace');
+        }
+
+        function setZoom(value, anchorX = ws.clientWidth / 2, anchorY = ws.clientHeight / 2) {
+          const oldScale = currentScale();
+          const newZoom = Math.max(MIN_SCALE, Math.min(MAX_SCALE, baseScale * value)) / baseScale;
+          const currentLeft = ws.scrollLeft + anchorX;
+          const currentTop = ws.scrollTop + anchorY;
+          zoom = newZoom;
+          updateStage();
+          const targetLeft = (currentLeft / oldScale) * currentScale();
+          const targetTop = (currentTop / oldScale) * currentScale();
+          ws.scrollLeft = Math.max(0, targetLeft - anchorX);
+          ws.scrollTop = Math.max(0, targetTop - anchorY);
+          $('#scaleNumber').value = Math.round(currentScale() * 100);
+        }
+
+        function resizeCanvas(width, height, preserve = true) {
+          let old = null;
+          if (preserve && draw.width) {
+            old = document.createElement('canvas');
+            old.width = draw.width;
+            old.height = draw.height;
+            old.getContext('2d').drawImage(draw, 0, 0);
+          }
+
+          draw.width = width;
+          draw.height = height;
+          ref.width = width;
+          ref.height = height;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.strokeStyle = '#0f172a';
+          ctx.lineWidth = Number($('#strokeWidth').value);
+
+          if (old) {
+            ctx.drawImage(old, 0, 0);
+          }
+
+          drawReference();
+          autosave();
+        }
+
+        function processedReference() {
+          if (!image) return null;
+          const canvas = document.createElement('canvas');
+          canvas.width = ref.width;
+          canvas.height = ref.height;
+          const x = canvas.getContext('2d');
+          x.filter = `contrast(${$('#contrast').value})`;
+          x.save();
+          if ($('#mirror').checked) {
+            x.translate(canvas.width, 0);
+            x.scale(-1, 1);
+          }
+          x.drawImage(image, 0, 0, canvas.width, canvas.height);
+          x.restore();
+          return canvas;
+        }
+
+        function drawReference() {
+          refCtx.clearRect(0, 0, ref.width, ref.height);
+          if (!image) return;
+
+          const c = processedReference();
+          if (!c) return;
+
+          refCtx.globalAlpha = Number($('#opacity').value);
+          refCtx.drawImage(c, 0, 0, ref.width, ref.height);
+          refCtx.globalAlpha = 1;
+
+          if ($('#edge').checked) {
+            refCtx.save();
+            refCtx.filter = 'contrast(1.5) saturate(1.2) brightness(1.1)';
+            refCtx.drawImage(c, 0, 0, ref.width, ref.height);
+            refCtx.restore();
+          }
+
+          if ($('#crosshair').checked && currentGuide) {
+            refCtx.strokeStyle = 'rgba(79,70,229,0.7)';
+            refCtx.lineWidth = 1;
+            refCtx.beginPath();
+            refCtx.moveTo(currentGuide.x, 0);
+            refCtx.lineTo(currentGuide.x, ref.height);
+            refCtx.moveTo(0, currentGuide.y);
+            refCtx.lineTo(ref.width, currentGuide.y);
+            refCtx.stroke();
+          }
+        }
+
+        function updateStage() {
+          const scale = currentScale();
+          ref.style.width = `${draw.width * scale}px`;
+          ref.style.height = `${draw.height * scale}px`;
+          draw.style.width = `${draw.width * scale}px`;
+          draw.style.height = `${draw.height * scale}px`;
+          ref.style.transform = 'translate(-50%, -50%)';
+          draw.style.transform = 'translate(-50%, -50%)';
+        }
+
+        function loadImageFile(file) {
+          if (!file || !file.type.startsWith('image/')) {
+            say('Please choose a valid image file.');
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            const url = reader.result;
+            const img = new Image();
+            img.onload = () => {
+              image = img;
+              sourceData = url;
+              const width = Math.max(400, Math.min(1600, img.width));
+              const height = Math.max(300, Math.min(1200, img.height));
+              resizeCanvas(width, height, false);
+              ctx.clearRect(0, 0, draw.width, draw.height);
+              fitImageToStage();
+              drawReference();
+              autosave();
+              say('Picture loaded — ready to trace');
+            };
+            img.src = url;
+          };
+          reader.readAsDataURL(file);
+        }
+
+        function setStroke(value) {
+          ctx.lineWidth = Number(value);
+        }
+
+        function handlePointerDown(e) {
+          pointerMap.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          const pos = pointFromEvent(e);
+          start = pos;
+          active = true;
+          moving = false;
+
+          if ($('#tool').value === 'eraser') {
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+          } else {
+            ctx.restore && ctx.restore();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = Number($('#strokeWidth').value);
+            ctx.globalCompositeOperation = 'source-over';
+          }
+
+          ctx.beginPath();
+          ctx.moveTo(pos.x, pos.y);
+          ctx.lineTo(pos.x, pos.y);
+          ctx.stroke();
+        }
+
+        function handlePointerMove(e) {
+          if (pointerMap.has(e.pointerId)) {
+            pointerMap.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          }
+
+          if (!active) {
+            currentGuide = pointFromEvent(e);
+            drawReference();
+            return;
+          }
+
+          const pos = pointFromEvent(e);
+          const tool = $('#tool').value;
+
+          if (tool === 'eraser') {
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.lineWidth = Number($('#strokeWidth').value) * 2;
+          } else {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.lineWidth = Number($('#strokeWidth').value);
+          }
+
+          ctx.lineTo(pos.x, pos.y);
+          ctx.stroke();
+          moving = true;
+          currentGuide = pos;
+          drawReference();
+        }
+
+        function handlePointerUp(e) {
+          if (pointerMap.has(e.pointerId)) pointerMap.delete(e.pointerId);
+          if (!active) return;
+          active = false;
+          if (moving) {
+            pushHistory();
+            moving = false;
+            autosave();
+          }
+        }
+
+        function restoreSession() {
+          try {
+            const saved = JSON.parse(localStorage.getItem('project-bob-session') || 'null');
+            if (!saved) return;
+
+            if (saved.opacity) $('#opacity').value = saved.opacity;
+            if (saved.contrast) $('#contrast').value = saved.contrast;
+            if (saved.zoom) {
+              zoom = Number(saved.zoom);
+            }
+
+            if (saved.drawing) {
+              const img = new Image();
+              img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const c = canvas.getContext('2d');
+                c.drawImage(img, 0, 0);
+                ctx.clearRect(0, 0, draw.width, draw.height);
+                ctx.drawImage(canvas, 0, 0, draw.width, draw.height);
+              };
+              img.src = saved.drawing;
+            }
+
+            if (saved.image) {
+              const img = new Image();
+              img.onload = () => {
+                image = img;
+                sourceData = saved.image;
+                const maxW = Math.max(500, ws.clientWidth * 0.9);
+                const maxH = Math.max(400, ws.clientHeight * 0.8);
+                const scale = Math.min(maxW / img.width, maxH / img.height, 1.8);
+                baseScale = scale;
+                updateStage();
+                drawReference();
+              };
+              img.src = saved.image;
+            }
+          } catch (error) {
+            console.warn('Could not restore local session', error);
+          }
+        }
+
+        function exportPNG() {
+          const a = document.createElement('a');
+          const dataURL = draw.toDataURL('image/png');
+          a.href = dataURL;
+          a.download = 'project-bob-trace.png';
+          a.click();
+          say('PNG downloaded');
+        }
+
+        function handleUndo() {
+          if (!history.length) return;
+          redoStack.push(ctx.getImageData(0, 0, draw.width, draw.height));
+          const snapshot = history.pop();
+          restoreHistory(snapshot);
+          $('#undo').disabled = history.length === 0;
+          $('#redo').disabled = redoStack.length === 0;
+          autosave();
+        }
+
+        function handleRedo() {
+          if (!redoStack.length) return;
+          history.push(ctx.getImageData(0, 0, draw.width, draw.height));
+          const snapshot = redoStack.pop();
+          restoreHistory(snapshot);
+          $('#undo').disabled = history.length === 0;
+          $('#redo').disabled = redoStack.length === 0;
+          autosave();
+        }
+
+        function setupEvents() {
+          $('#upload').addEventListener('click', () => $('#file').click());
+          $('#file').addEventListener('change', (e) => loadImageFile(e.target.files[0]));
+
+          $('#tool').addEventListener('change', () => {
+            say(`Using ${$('#tool').value} tool`);
+          });
+
+          $('#strokeWidth').addEventListener('input', (e) => setStroke(e.target.value));
+          $('#opacity').addEventListener('input', () => drawReference());
+          $('#contrast').addEventListener('input', () => drawReference());
+          $('#edge').addEventListener('change', drawReference);
+          $('#mirror').addEventListener('change', drawReference);
+          $('#ghost').addEventListener('change', () => {
+            if ($('#ghost').checked) {
+              say('Ghost guide on');
+            } else {
+              say('Ghost guide off');
+            }
+          });
+          $('#crosshair').addEventListener('change', drawReference);
+          $('#scaleNumber').addEventListener('change', () => {
+            const value = Number($('#scaleNumber').value) / 100;
+            setZoom(value);
+          });
+
+          $('#fitBtn').addEventListener('click', fitImageToStage);
+          $('#saveBtn').addEventListener('click', exportPNG);
+          $('#undo').addEventListener('click', handleUndo);
+          $('#redo').addEventListener('click', handleRedo);
+          $('#clear').addEventListener('click', clearCanvas);
+
+          draw.addEventListener('pointerdown', handlePointerDown);
+          draw.addEventListener('pointermove', handlePointerMove);
+          draw.addEventListener('pointerup', handlePointerUp);
+          draw.addEventListener('pointerleave', handlePointerUp);
+          draw.addEventListener('pointercancel', handlePointerUp);
+
+          ws.addEventListener('wheel', (e) => {
+            if (!image) return;
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.92 : 1.08;
+            setZoom(delta, e.clientX - ws.getBoundingClientRect().left, e.clientY - ws.getBoundingClientRect().top);
+          }, { passive: false });
+        }
+
+        function init() {
+          resizeCanvas(900, 620, false);
+          setupEvents();
+          restoreSession();
+          $('#undo').disabled = true;
+          $('#redo').disabled = true;
+          currentGuide = { x: draw.width / 2, y: draw.height / 2 };
+          drawReference();
+        }
+
+        init();
+      })();
+    </script>
+  </body>
+</html>
