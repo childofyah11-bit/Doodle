@@ -14,79 +14,10 @@
       <a class="brand" href="index.html" aria-label="Project Bob home"><span class="brand-icon">b.</span><span>project bob</span></a>
       <div class="top-note"><span class="save-dot" aria-hidden="true"></span><span id="saveStatus">Saved on this device</span></div>
       <div class="top-actions">
+        <a class="button quiet" href="color-by-number.html">Color by Number</a>
         <button class="button quiet" id="newButton" type="button">New canvas</button>
         <button class="button dark" id="exportButton" type="button">Export drawing <span aria-hidden="true">↗</span></button>
       </div>
     </header>
 
     <section class="editor" aria-label="Drawing editor">
-      <aside class="toolrail" aria-label="Drawing tools">
-        <div class="rail-label">TOOLS</div>
-        <button class="tool-button selected" data-tool="pencil" aria-label="Pencil tool" title="Pencil (B)"><span>✎</span><small>Pencil</small></button>
-        <button class="tool-button" data-tool="eraser" aria-label="Eraser tool" title="Eraser (E)"><span>◩</span><small>Eraser</small></button>
-        <div class="rail-divider"></div>
-        <button class="tool-button" id="undoButton" aria-label="Undo" title="Undo (Ctrl+Z)" disabled><span>↶</span><small>Undo</small></button>
-        <button class="tool-button" id="redoButton" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" disabled><span>↷</span><small>Redo</small></button>
-        <div class="rail-spacer"></div>
-        <button class="tool-button danger-tool" id="clearButton" aria-label="Clear drawing" title="Clear drawing"><span>⌫</span><small>Clear</small></button>
-      </aside>
-
-      <div class="work-area">
-        <div class="canvas-toolbar">
-          <div class="canvas-title"><span class="live-indicator"></span><strong>Untitled sketch</strong><span class="tiny-tag">LOCAL</span></div>
-          <div class="canvas-actions">
-            <button class="icon-button" id="fitButton" type="button" title="Fit canvas">Fit</button>
-            <label class="zoom-control" for="zoomRange"><span>−</span><input id="zoomRange" type="range" min="25" max="200" value="100" aria-label="Canvas zoom"><output id="zoomValue">100%</output><span>+</span></label>
-          </div>
-        </div>
-
-        <div class="canvas-scroll" id="canvasScroll">
-          <div class="canvas-stage" id="canvasStage">
-            <div class="artboard" id="artboard">
-              <canvas id="referenceCanvas" aria-hidden="true"></canvas>
-              <canvas id="drawingCanvas" aria-label="Drawing canvas" tabindex="0"></canvas>
-              <div id="emptyState" class="empty-state">
-                <div class="empty-icon">✳</div>
-                <h1>Make a little something.</h1>
-                <p>Start with a blank canvas, or bring in an image to trace.</p>
-                <button class="button dark" id="addImageButton" type="button">Add a reference image <span>＋</span></button>
-                <span class="drop-hint">You can also drop an image right here</span>
-              </div>
-            </div>
-          </div>
-          <div class="canvas-caption"><span>Project Bob is your space. Make it yours.</span><span>⌘ / Ctrl + Z to undo</span></div>
-        </div>
-      </div>
-
-      <aside class="inspector" aria-label="Canvas settings">
-        <div class="inspector-heading"><div><span class="eyebrow">YOUR WORKSPACE</span><h2>Make it yours.</h2></div><span class="sparkle">✳</span></div>
-        <div class="setting-block">
-          <div class="setting-title"><label for="brushSize">Brush size</label><output id="brushSizeValue">6 px</output></div>
-          <input class="full-range" id="brushSize" type="range" min="1" max="48" value="6">
-          <div class="range-ends"><span>Fine</span><span>Bold</span></div>
-        </div>
-        <div class="setting-block">
-          <div class="setting-title"><label for="brushColor">Ink color</label><span id="colorName">Ink</span></div>
-          <div class="color-row"><input id="brushColor" type="color" value="#24211f" aria-label="Choose brush color"><div class="swatches" aria-label="Quick colors"><button class="swatch active" data-color="#24211f" style="--swatch:#24211f" aria-label="Ink black"></button><button class="swatch" data-color="#e35d42" style="--swatch:#e35d42" aria-label="Tomato red"></button><button class="swatch" data-color="#3f72c5" style="--swatch:#3f72c5" aria-label="Blue"></button><button class="swatch" data-color="#418a68" style="--swatch:#418a68" aria-label="Green"></button><button class="swatch" data-color="#e0a52e" style="--swatch:#e0a52e" aria-label="Yellow"></button></div></div>
-        </div>
-        <div class="setting-block reference-block">
-          <div class="setting-title"><label>Reference image</label><button class="text-button" id="removeImageButton" type="button" hidden>Remove</button></div>
-          <button class="upload-card" id="uploadCard" type="button"><span class="upload-icon">↥</span><span><strong id="imageAction">Add an image</strong><small>PNG, JPG, or WebP</small></span><span class="upload-arrow">→</span></button>
-          <input id="imageInput" type="file" accept="image/*" hidden>
-          <div id="referenceControls" hidden>
-            <div class="setting-title compact-title"><label for="imageOpacity">Image opacity</label><output id="opacityValue">45%</output></div>
-            <input id="imageOpacity" class="full-range" type="range" min="0" max="100" value="45">
-            <label class="select-label" for="imageMode">Reference look</label>
-            <select id="imageMode" class="select-control"><option value="original">Original</option><option value="enhance">Clearer contrast</option><option value="mono">Black &amp; white</option><option value="outline">Edge outline</option></select>
-            <div id="modeNote" class="helper-note">A quiet guide layer under your drawing.</div>
-          </div>
-        </div>
-        <div class="inspector-bottom"><div class="privacy-icon">⌂</div><div><strong>Just for you.</strong><p>Your work stays in this browser. Nothing gets uploaded.</p></div></div>
-      </aside>
-    </section>
-    <input id="fileInputFallback" type="file" accept="image/*" hidden>
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  </main>
-  <script src="script.js"></script>
-</body>
-</html>
