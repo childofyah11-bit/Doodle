@@ -10,6 +10,7 @@
   const brushSizeInput = document.querySelector('#brushSize');
   const brushColorInput = document.querySelector('#brushColor');
   const emptyState = document.querySelector('#emptyState');
+  const canvasStack = document.querySelector('.canvas-stack');
   const status = document.querySelector('#status');
   let isDrawing = false;
   let lastPoint = null;
@@ -127,6 +128,20 @@
     loadReference(event.target.files[0]);
     event.target.value = '';
   });
+  ['dragenter', 'dragover'].forEach(type => canvasStack.addEventListener(type, event => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+    canvasStack.classList.add('drag-over');
+  }));
+  ['dragleave', 'drop'].forEach(type => canvasStack.addEventListener(type, event => {
+    event.preventDefault();
+    if (type === 'drop') {
+      const imageFile = [...event.dataTransfer.files].find(file => file.type.startsWith('image/'));
+      if (imageFile) loadReference(imageFile);
+      else announce('Drop an image file to use it as your tracing reference.');
+    }
+    canvasStack.classList.remove('drag-over');
+  }));
   opacityInput.addEventListener('input', () => {
     const opacity = Number(opacityInput.value);
     referenceCanvas.style.opacity = String(opacity / 100);
