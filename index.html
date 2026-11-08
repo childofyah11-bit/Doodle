@@ -3,21 +3,60 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f4f1e9">
-  <meta name="description" content="Project Bob is a simple, private drawing and tracing workspace that runs in your browser.">
-  <title>Project Bob — Draw something</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#f5f3ed">
+  <meta name="description" content="A simple, private tracing studio that runs in your browser.">
+  <title>Doodle — Tracing Studio</title>
+  <link rel="stylesheet" href="trace.css">
 </head>
 <body>
   <main class="app">
     <header class="topbar">
-      <a class="brand" href="index.html" aria-label="Project Bob home"><span class="brand-icon">b.</span><span>project bob</span></a>
-      <div class="top-note"><span class="save-dot" aria-hidden="true"></span><span id="saveStatus">Saved on this device</span></div>
-      <div class="top-actions">
-        <a class="button quiet" href="color-by-number.html">Color by Number</a>
-        <button class="button quiet" id="newButton" type="button">New canvas</button>
-        <button class="button dark" id="exportButton" type="button">Export drawing <span aria-hidden="true">↗</span></button>
-      </div>
+      <a class="brand" href="index.html" aria-label="Doodle tracing studio home"><span class="brand-mark">d.</span><span>Doodle</span></a>
+      <p class="privacy"><span class="status-dot" aria-hidden="true"></span> Your work stays on this device</p>
+      <button id="exportButton" class="button button-dark" type="button">Export PNG <span aria-hidden="true">↗</span></button>
     </header>
 
-    <section class="editor" aria-label="Drawing editor">
+    <section class="workspace" aria-label="Tracing workspace">
+      <aside class="tools" aria-label="Tracing tools">
+        <div class="section-heading"><span class="eyebrow">TRACING STUDIO</span><h1>Make it yours.</h1><p>Choose a picture, place it under the canvas, and trace.</p></div>
+
+        <label class="upload" for="imageInput"><span class="upload-icon" aria-hidden="true">＋</span><span><strong id="imageAction">Add a reference image</strong><small>PNG, JPG, or WebP · stays private</small></span></label>
+        <input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+
+        <div class="control-block">
+          <div class="control-label"><label for="opacity">Reference opacity</label><output id="opacityValue">35%</output></div>
+          <input id="opacity" type="range" min="0" max="100" value="35">
+        </div>
+
+        <div class="control-block">
+          <div class="control-label"><label for="brushSize">Brush size</label><output id="sizeValue">5 px</output></div>
+          <input id="brushSize" type="range" min="1" max="30" value="5">
+        </div>
+
+        <div class="control-block">
+          <span class="control-title">Ink color</span>
+          <div class="color-row"><input id="brushColor" type="color" value="#292824" aria-label="Choose ink color"><span>Choose a color for your lines</span></div>
+        </div>
+
+        <div class="tool-row" role="group" aria-label="Drawing mode">
+          <button class="tool-button active" id="pencilButton" type="button" aria-pressed="true">✎ <span>Pencil</span></button>
+          <button class="tool-button" id="eraserButton" type="button" aria-pressed="false">⌫ <span>Eraser</span></button>
+        </div>
+        <button id="clearButton" class="button button-light" type="button">Clear tracing</button>
+        <p id="status" class="hint" role="status" aria-live="polite">Tip: lower the reference opacity to see your lines clearly.</p>
+      </aside>
+
+      <section class="canvas-panel" aria-label="Tracing canvas">
+        <div class="canvas-heading"><div><span class="eyebrow">YOUR CANVAS</span><h2>Trace away</h2></div><span class="canvas-size">1000 × 700</span></div>
+        <div class="canvas-scroll"><div class="canvas-stack">
+          <canvas id="referenceCanvas" width="1000" height="700" aria-hidden="true"></canvas>
+          <canvas id="drawingCanvas" width="1000" height="700" aria-label="Draw your tracing here"></canvas>
+          <div id="emptyState" class="empty-state"><span aria-hidden="true">✳</span><strong>Your canvas is ready</strong><small>Add a reference image or start drawing.</small></div>
+        </div></div>
+      </section>
+    </section>
+    <footer>Simple tracing. No account, no uploads.</footer>
+  </main>
+  <script src="trace.js"></script>
+</body>
+</html>
